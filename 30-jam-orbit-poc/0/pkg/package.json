@@ -1,0 +1,15 @@
+{
+  "name": "jam-vis-poc",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "jam_vis_poc_bg.wasm",
+    "jam_vis_poc.js",
+    "jam_vis_poc.d.ts"
+  ],
+  "main": "jam_vis_poc.js",
+  "types": "jam_vis_poc.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
