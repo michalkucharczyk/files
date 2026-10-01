@@ -1,0 +1,993 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>
+:root{color-scheme:light;box-sizing:border-box}
+body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}
+img{max-width:100%}
+[hidden]:not([hidden=until-found i]){display:none!important}
+</style>
+<title>Toy JAM Trie</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap");
+
+:root {
+  --paper: #f6f7f4;
+  --panel: #ffffff;
+  --ink: #1d2126;
+  --muted: #5d6670;
+  --line: #d6dad3;
+  --hash: #2f6fdb;
+  --on-hash: #ffffff;
+  --leaf: #f3b64a;
+  --leaf-fill: #fff1d6;
+  --path: #d97706;
+  --error: #b42318;
+  --font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #15181b;
+    --panel: #1c2024;
+    --ink: #e4e7e2;
+    --muted: #98a2ab;
+    --line: #30363c;
+    --hash: #6da0ff;
+    --on-hash: #0b1220;
+    --leaf: #e0a53a;
+    --leaf-fill: #3a2e14;
+    --path: #f0a640;
+    --error: #ff8a80;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #15181b;
+  --panel: #1c2024;
+  --ink: #e4e7e2;
+  --muted: #98a2ab;
+  --line: #30363c;
+  --hash: #6da0ff;
+  --on-hash: #0b1220;
+  --leaf: #e0a53a;
+  --leaf-fill: #3a2e14;
+  --path: #f0a640;
+  --error: #ff8a80;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.45;
+}
+.page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding-block: 20px 48px;
+  padding-inline: 16px;
+}
+h1 { font-size: 22px; margin: 0 0 4px; font-weight: 600; }
+h2 { font-size: 17px; margin: 0; font-weight: 600; }
+h3 { font-size: 13px; margin: 0 0 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+p { margin: 0; }
+.lede { color: var(--muted); max-width: 70ch; }
+.mono, code, input, select { font-family: var(--font-mono); }
+.hint { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.error { color: var(--error); font-size: 13px; }
+.error:empty { display: none; }
+
+.panel, .card, .tree-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.panel { padding: 14px; margin-top: 16px; display: grid; gap: 12px; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field-label, label { font-size: 13px; font-weight: 500; }
+.input-row { display: flex; gap: 8px; }
+.input-row input { flex: 1; }
+input, select, button {
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px 8px;
+  min-width: 0;
+  width: 100%;
+}
+button {
+  width: auto;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  white-space: nowrap;
+}
+button:hover { border-color: var(--muted); }
+button[aria-pressed="true"] { border-color: var(--hash); color: var(--hash); }
+:focus-visible { outline: 2px solid var(--hash); outline-offset: 2px; }
+.button-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.proof-inputs { display: grid; gap: 12px; }
+.query-grid { display: grid; grid-template-columns: 2fr 2fr 1fr 1fr; gap: 10px; }
+.checkbox { display: inline-flex; gap: 6px; align-items: center; font-weight: 400; }
+.checkbox input { width: auto; }
+
+.tree-section, .proof-section { margin-top: 24px; display: grid; gap: 10px; }
+.section-header { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
+.legend > span { display: inline-flex; gap: 6px; align-items: center; }
+.legend svg { overflow: visible; }
+.tree-pair { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+.tree-pair.has-previous { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.tree-panel { margin: 0; padding: 8px 0 0; min-width: 0; }
+.tree-panel figcaption { font-size: 12px; color: var(--muted); padding-inline: 12px; }
+.tree-scroll { overflow-x: auto; padding: 4px 8px 8px; }
+.tree-scroll svg { display: block; margin: 0 auto; }
+
+.trie text { font-family: var(--font-mono); fill: var(--ink); }
+.trie .edge line { stroke: var(--muted); stroke-width: 1.5; }
+.trie .edge-bit { font-size: 11px; fill: var(--muted); text-anchor: middle; }
+.trie .edge.on-path line { stroke: var(--path); stroke-width: 3; }
+.trie .edge.on-path .edge-bit { fill: var(--path); font-weight: 600; }
+.trie .shape { fill: var(--panel); stroke: var(--ink); stroke-width: 1.5; }
+.trie .empty .shape { stroke: var(--muted); stroke-dasharray: 3 3; }
+.trie .empty text { fill: var(--muted); font-size: 12px; text-anchor: middle; }
+.trie .leaf .shape { fill: var(--leaf-fill); stroke: var(--leaf); }
+.trie .leaf-key { font-size: 12px; text-anchor: middle; font-weight: 500; }
+.trie .node-label { font-size: 11px; fill: var(--muted); }
+.trie .tag-B .shape { stroke-width: 2.5; }
+.trie .tag-H .shape { fill: var(--hash); stroke: var(--hash); }
+.trie .tag-H .leaf-key { fill: var(--on-hash); }
+.trie .tag-H .node-label { fill: var(--hash); font-weight: 600; }
+.trie .tag-E .shape { stroke: var(--ink); stroke-width: 1.5; }
+.trie .tag-E text { fill: var(--ink); }
+.trie .tag-L .shape { stroke-width: 2.5; }
+.trie .end-ring { fill: none; stroke: var(--path); stroke-width: 2; }
+.trie .end-label { font-size: 11px; fill: var(--path); text-anchor: middle; font-weight: 600; }
+.trie .is-dimmed { opacity: 0.28; }
+
+.legend .shape { fill: var(--panel); stroke: var(--ink); stroke-width: 1.5; }
+.legend .shape.hash { fill: var(--hash); stroke: var(--hash); }
+.legend .shape.leaf { fill: var(--leaf-fill); stroke: var(--leaf); stroke-width: 2; }
+.legend .shape.empty { stroke: var(--muted); stroke-dasharray: 3 3; }
+.legend .shape.dimmed { opacity: 0.28; }
+.legend .path-line { stroke: var(--path); stroke-width: 3; }
+
+.sections { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.card { padding: 12px 14px; min-width: 0; }
+.card.wide { grid-column: 1 / -1; }
+.tag-stream { display: flex; flex-wrap: wrap; gap: 4px; font-family: var(--font-mono); }
+.tag-cell {
+  display: grid;
+  justify-items: center;
+  min-width: 30px;
+  padding: 3px 4px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+.tag-cell b { font-size: 15px; }
+.tag-cell small { font-size: 11px; color: var(--muted); }
+.tag-cell.tag-H { border-color: var(--hash); color: var(--hash); }
+.tag-cell.tag-L { border-color: var(--leaf); background: var(--leaf-fill); }
+.tag-cell.tag-E { border-style: dashed; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 3px 8px 3px 0; vertical-align: top; overflow-wrap: anywhere; }
+th { font-weight: 500; color: var(--muted); }
+td.mono, td code { font-family: var(--font-mono); }
+ol.hash-list { margin: 0; padding-left: 22px; font-family: var(--font-mono); font-size: 13px; }
+.card p + p, .card table + p, .card p + table { margin-top: 8px; }
+.total-row td { border-top: 1px solid var(--line); font-weight: 600; }
+.footnote { font-size: 12px; color: var(--muted); max-width: 80ch; }
+
+@media (max-width: 860px) {
+  .query-grid { grid-template-columns: 1fr 1fr; }
+  .tree-pair.has-previous, .sections { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 520px) {
+  .query-grid { grid-template-columns: minmax(0, 1fr); }
+  .input-row { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+<main class="page">
+  <header>
+    <h1>Toy JAM Trie</h1>
+    <p class="lede">Type a few short binary keys to build the Gray Paper's state trie M(), then a query to see the JIP-6 compact proof for it: which nodes are expanded, hashed, empty or leaves, and the five sections the proof ships.</p>
+  </header>
+
+  <section class="panel" aria-label="Inputs">
+    <div class="field">
+      <span class="field-label">Presets</span>
+      <div class="button-row" id="preset-buttons"></div>
+      <div class="button-row" id="preset-query-buttons" data-proof-only></div>
+    </div>
+
+    <form class="field" id="trie-form">
+      <label for="trie-keys">State keys (comma separated bit strings, up to 16 bits; shorter keys are padded with 0s)</label>
+      <div class="input-row">
+        <input id="trie-keys" autocomplete="off" spellcheck="false">
+        <button id="build-trie" type="submit">Build trie</button>
+      </div>
+      <p class="error" id="trie-error" aria-live="polite"></p>
+      <p class="hint mono" id="trie-summary"></p>
+    </form>
+
+    <label class="checkbox" for="show-proof"><input type="checkbox" id="show-proof" checked> Show proof</label>
+
+    <div class="proof-inputs" id="proof-inputs" data-proof-only>
+      <div class="query-grid">
+        <div class="field">
+          <label for="query-keys">Listed keys</label>
+          <input id="query-keys" autocomplete="off" spellcheck="false" placeholder="110, 010">
+        </div>
+        <div class="field">
+          <label for="query-ranges">Ranges (start-end)</label>
+          <input id="query-ranges" autocomplete="off" spellcheck="false" placeholder="001-110, 01-01, -">
+        </div>
+        <div class="field">
+          <label for="query-known">Known mode</label>
+          <select id="query-known">
+            <option value="none">none</option>
+            <option value="keys">keys</option>
+            <option value="keys_and_values">keys_and_values</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="size-limit">Size limit (octets)</label>
+          <input id="size-limit" type="number" min="1" step="1" placeholder="no limit">
+        </div>
+      </div>
+      <p class="error" id="query-error" aria-live="polite"></p>
+      <p class="hint mono" id="query-summary"></p>
+    </div>
+  </section>
+
+  <section class="tree-section" aria-label="Trie">
+    <div class="section-header">
+      <h2>Trie</h2>
+      <label class="checkbox" for="show-previous"><input type="checkbox" id="show-previous" checked> Show the previous trie beside it</label>
+    </div>
+    <p class="hint" id="trie-diff"></p>
+    <div class="legend" aria-label="Legend">
+      <span><svg width="16" height="16" viewBox="0 0 16 16"><circle class="shape" cx="8" cy="8" r="6"/></svg>branch<span data-proof-only> (recomputed)</span></span>
+      <span data-proof-only><svg width="16" height="16" viewBox="0 0 16 16"><circle class="shape hash" cx="8" cy="8" r="6"/></svg>shipped hash (H)</span>
+      <span><svg width="22" height="16" viewBox="0 0 22 16"><rect class="shape leaf" x="1" y="2" width="20" height="12" rx="3"/></svg><span data-proof-only>shipped </span>leaf<span data-proof-only> (L)</span></span>
+      <span><svg width="16" height="16" viewBox="0 0 16 16"><circle class="shape empty" cx="8" cy="8" r="6"/></svg>empty<span data-proof-only> (E)</span></span>
+      <span data-proof-only><svg width="16" height="16" viewBox="0 0 16 16"><circle class="shape dimmed" cx="8" cy="8" r="6"/></svg>not in the proof</span>
+      <span data-proof-only><svg width="22" height="16" viewBox="0 0 22 16"><line class="path-line" x1="1" y1="8" x2="21" y2="8"/></svg>listed key's path</span>
+    </div>
+    <div class="tree-pair" id="tree-pair">
+      <figure class="tree-panel">
+        <figcaption>Current trie<span data-proof-only>, coloured by the proof</span></figcaption>
+        <div class="tree-scroll" id="current-tree"></div>
+      </figure>
+      <figure class="tree-panel" id="previous-panel" hidden>
+        <figcaption>Previous trie</figcaption>
+        <div class="tree-scroll" id="previous-tree"></div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="proof-section" id="proof-section" aria-label="Proof" data-proof-only>
+    <h2>Proof</h2>
+    <p class="hint" id="truncation"></p>
+    <div class="sections" id="proof-sections"></div>
+    <p class="footnote">At toy scale every value is <code>v</code> plus at most 16 key bits, so at most 17 octets. Every leaf value is therefore embedded, and the hash-only form (for a leaf in the proof whose value was not asked for and is longer than 32 octets) never appears here, nor does the long form. Hashes are labels, not real blake2b output, and key suffixes are <code>W − d</code> bits instead of <code>248 − d</code>.</p>
+  </section>
+</main>
+
+<script>
+const MIN_WIDTH = 3;
+const MAX_WIDTH = 16;
+const EMBEDDED_LIMIT = 32;
+const HASH_SIZE = 32;
+const OLD_NODE_SIZE = 64;
+const TAG_CODES = { B: "00", H: "01", E: "10", L: "11" };
+const KIND_FOR_KNOWN_MODE = { none: "Full", keys: "KeyElided", keys_and_values: "FullyElided" };
+
+const PRESETS = [
+  {
+    id: "test-vector",
+    name: "JIP-6 test vectors",
+    keys: "000,001,100,110,111",
+    queries: [
+      { name: "key 110", keys: "110", ranges: "" },
+      { name: "keys 001, 111", keys: "001,111", ranges: "" },
+      { name: "range 001-110", keys: "", ranges: "001-110" },
+      { name: "keys 010, 101 (absent)", keys: "010,101", ranges: "" },
+    ],
+  },
+  {
+    id: "chain",
+    name: "Chain",
+    keys: "000010000011,000000010011,000000000011",
+    queries: [
+      { name: "key 000000010011", keys: "000000010011", ranges: "" },
+      { name: "key 000000100000 (absent)", keys: "000000100000", ranges: "" },
+    ],
+  },
+  {
+    id: "two-key",
+    name: "Two keys",
+    keys: "00001000011,00000000011",
+    queries: [
+      { name: "key 00001000011", keys: "00001000011", ranges: "" },
+      { name: "whole trie", keys: "", ranges: "-" },
+    ],
+  },
+];
+
+class InputError extends Error {}
+
+function splitList(text) {
+  return text.split(",").map((item) => item.trim()).filter((item) => item !== "");
+}
+
+function sum(numbers) {
+  return numbers.reduce((total, number) => total + number, 0);
+}
+
+function requireBits(bits, maxLength, what) {
+  if (!/^[01]*$/.test(bits)) throw new InputError(`${what} "${bits}" is not a bit string`);
+  if (bits.length > maxLength) throw new InputError(`${what} ${bits} is longer than ${maxLength} bits`);
+}
+
+function parseKeys(text) {
+  const typedKeys = splitList(text);
+  typedKeys.forEach((typed) => requireBits(typed, MAX_WIDTH, "Key"));
+  const width = Math.max(MIN_WIDTH, ...typedKeys.map((typed) => typed.length));
+  const entries = typedKeys.map((typed) => ({ typed, key: typed.padEnd(width, "0") }));
+  const typedByKey = new Map();
+  for (const { typed, key } of entries) {
+    if (typedByKey.has(key)) throw new InputError(`${typedByKey.get(key)} and ${typed} are the same key once padded: ${key}`);
+    typedByKey.set(key, typed);
+  }
+  entries.sort((first, second) => (first.key < second.key ? -1 : 1));
+  return { width, entries };
+}
+
+function parseRange(text, width) {
+  const bounds = text.split("-");
+  if (bounds.length !== 2) throw new InputError(`Range "${text}" is not of the form start-end`);
+  bounds.forEach((bound) => requireBits(bound, width, "Range bound"));
+  return { text, start: bounds[0].padEnd(width, "0"), end: bounds[1].padEnd(width, "1") };
+}
+
+function validateQuery({ listedKeys, ranges }) {
+  listedKeys.slice(1).forEach((key, index) => {
+    if (listedKeys[index] >= key) throw new InputError(`Listed keys must be strictly ascending: ${listedKeys[index]} then ${key}`);
+  });
+  ranges.forEach((range, index) => {
+    if (range.start > range.end) throw new InputError(`Range ${range.text}: start ${range.start} exceeds end ${range.end}`);
+    const previous = ranges[index - 1];
+    if (previous && range.start <= previous.end) {
+      throw new InputError(`Range ${range.text} must start after the previous range's end ${previous.end}`);
+    }
+    const keyInside = listedKeys.find((key) => isInRange(key, range));
+    if (keyInside) throw new InputError(`Listed key ${keyInside} lies within range ${range.text}`);
+  });
+}
+
+function parseQuery({ keysText, rangesText, known }, width) {
+  const typedKeys = splitList(keysText);
+  typedKeys.forEach((typed) => requireBits(typed, width, "Listed key"));
+  const query = {
+    listedKeys: typedKeys.map((typed) => typed.padEnd(width, "0")),
+    ranges: splitList(rangesText).map((text) => parseRange(text, width)),
+    known,
+  };
+  validateQuery(query);
+  return query;
+}
+
+function parseSizeLimit(text) {
+  if (text.trim() === "") return null;
+  const limit = Number(text);
+  if (!Number.isInteger(limit) || limit < 1) throw new InputError(`Size limit "${text}" is not a positive whole number`);
+  return limit;
+}
+
+function buildTrie(keys, path = "") {
+  if (keys.length === 0) return { type: "empty", path };
+  // A subtree with one key is a leaf at whatever depth that happens: M() has no path compression.
+  if (keys.length === 1) return { type: "leaf", path, key: keys[0], value: `v${keys[0]}` };
+  const depth = path.length;
+  return {
+    type: "branch",
+    path,
+    left: buildTrie(keys.filter((key) => key[depth] === "0"), `${path}0`),
+    right: buildTrie(keys.filter((key) => key[depth] === "1"), `${path}1`),
+  };
+}
+
+function trieNodes(node) {
+  return node.type === "branch" ? [node, ...trieNodes(node.left), ...trieNodes(node.right)] : [node];
+}
+
+function walkTrie(node, key) {
+  return node.type === "branch" ? walkTrie(key[node.path.length] === "0" ? node.left : node.right, key) : node;
+}
+
+function nodeLabel(node) {
+  if (node.type === "leaf") return node.key;
+  if (node.type === "empty") return "∅";
+  return node.path === "" ? "root" : `N${node.path}`;
+}
+
+function isInRange(key, range) {
+  return range.start <= key && key <= range.end;
+}
+
+function isRequestedKey(key, query) {
+  return query.listedKeys.includes(key) || query.ranges.some((range) => isInRange(key, range));
+}
+
+function prefixMeetsRange(path, range, width) {
+  return path.padEnd(width, "0") <= range.end && path.padEnd(width, "1") >= range.start;
+}
+
+function isExpanded(path, query, width) {
+  return query.listedKeys.some((key) => key.startsWith(path)) || query.ranges.some((range) => prefixMeetsRange(path, range, width));
+}
+
+function chooseLeafKind(leaf, request) {
+  const isRequested = isRequestedKey(leaf.key, request);
+  // The verifier finds an elided leaf by the one known key under its path; a second listed key there makes that ambiguous.
+  const sharesPathWithListedKey = request.listedKeys.some((key) => key !== leaf.key && key.startsWith(leaf.path));
+  if (isRequested && !sharesPathWithListedKey) return KIND_FOR_KNOWN_MODE[request.known];
+  if (!isRequested && leaf.value.length > EMBEDDED_LIMIT) return "ValueHash";
+  return "Full";
+}
+
+function expandForQuery(trie, query, width, request = query) {
+  function visit(node) {
+    if (node.type === "empty") return { tag: "E", node };
+    if (!isExpanded(node.path, query, width)) return { tag: "H", node };
+    if (node.type === "leaf") return { tag: "L", node, leafKind: chooseLeafKind(node, request) };
+    return { tag: "B", node, left: visit(node.left), right: visit(node.right) };
+  }
+  return visit(trie);
+}
+
+function preOrder(proofNode) {
+  return proofNode.tag === "B" ? [proofNode, ...preOrder(proofNode.left), ...preOrder(proofNode.right)] : [proofNode];
+}
+
+function valueForm(value) {
+  return value.length <= EMBEDDED_LIMIT ? value.length : 33;
+}
+
+function kindOctet(leafKind, value) {
+  if (leafKind === "FullyElided") return 0x80;
+  if (leafKind === "ValueHash") return 34;
+  return (leafKind === "KeyElided" ? 0x40 : 0) | valueForm(value);
+}
+
+function shipsKeySuffix(leafKind) {
+  return leafKind === "Full" || leafKind === "ValueHash";
+}
+
+function shipsValue(leafKind) {
+  return leafKind === "Full" || leafKind === "KeyElided";
+}
+
+function hashEntries(proofNode) {
+  if (proofNode.tag === "H") return [`h(${nodeLabel(proofNode.node)})`];
+  if (proofNode.leafKind === "ValueHash") return [`h(${proofNode.node.value})`];
+  return [];
+}
+
+function packTags(tags) {
+  const bits = tags.map((tag) => TAG_CODES[tag]).join("");
+  const paddedBits = bits.padEnd(Math.ceil(bits.length / 8) * 8, "0");
+  return paddedBits.match(/.{8}/g).map((octet) => parseInt(octet, 2).toString(16).padStart(2, "0")).join("");
+}
+
+function encodeProof(proofTree) {
+  const nodes = preOrder(proofTree);
+  const leaves = nodes.filter((proofNode) => proofNode.tag === "L").map(({ node, leafKind }) => ({
+    key: node.key,
+    depth: node.path.length,
+    leafKind,
+    octet: kindOctet(leafKind, node.value),
+    suffix: shipsKeySuffix(leafKind) ? node.key.slice(node.path.length) : null,
+    value: shipsValue(leafKind) ? node.value : null,
+  }));
+  const tags = nodes.map((proofNode) => proofNode.tag);
+  return { tags, packedTags: packTags(tags), leaves, hashes: nodes.flatMap(hashEntries) };
+}
+
+function lookupInProof(proofTree, key) {
+  let current = proofTree;
+  while (current.tag === "B") current = key[current.node.path.length] === "0" ? current.left : current.right;
+  return current;
+}
+
+function verdictFor(key, proofTree) {
+  const end = lookupInProof(proofTree, key);
+  if (end.tag === "H") return { key, outcome: "Not covered", detail: `path leaves the proof at h(${nodeLabel(end.node)})` };
+  if (end.tag === "E") return { key, outcome: "Absent", detail: `path ends at E under ${end.node.path || "the root"}` };
+  if (end.node.key === key) return { key, outcome: "Present", detail: `leaf at depth ${end.node.path.length}` };
+  return { key, outcome: "Absent", detail: `path ends at the leaf holding ${end.node.key}` };
+}
+
+function rangeCoverage(range, encoded) {
+  return { range, coveredKeys: encoded.leaves.map((leaf) => leaf.key).filter((key) => isInRange(key, range)) };
+}
+
+function estimateBytes(encoded, request, width) {
+  const keyBits = sum(encoded.leaves.map((leaf) => leaf.suffix?.length ?? 0));
+  const parts = [
+    ["version", 1],
+    [`tags: ⌈2·${encoded.tags.length}/8⌉`, Math.ceil((2 * encoded.tags.length) / 8)],
+    [`kinds: ${encoded.leaves.length} × 1`, encoded.leaves.length],
+    [`hashes: ${encoded.hashes.length} × ${HASH_SIZE}`, HASH_SIZE * encoded.hashes.length],
+    [`keys: ⌈${keyBits}/8⌉`, Math.ceil(keyBits / 8)],
+    ["values", sum(encoded.leaves.map((leaf) => leaf.value?.length ?? 0))],
+  ];
+  const pathNodeCount = encoded.tags.filter((tag) => tag === "B" || tag === "L").length;
+  const returnedPairs = encoded.leaves.filter((leaf) => isRequestedKey(leaf.key, request));
+  const pairBytes = sum(returnedPairs.map((leaf) => Math.ceil(width / 8) + `v${leaf.key}`.length));
+  return {
+    parts,
+    compactTotal: sum(parts.map(([, bytes]) => bytes)),
+    oldParts: [
+      [`${pathNodeCount} nodes on the paths × ${OLD_NODE_SIZE}`, OLD_NODE_SIZE * pathNodeCount],
+      [`${returnedPairs.length} pairs × (⌈${width}/8⌉ + value)`, pairBytes],
+    ],
+    oldTotal: OLD_NODE_SIZE * pathNodeCount + pairBytes,
+  };
+}
+
+function chargedKeys(stateKeys, request) {
+  const rangeKeys = stateKeys.filter((key) => request.ranges.some((range) => isInRange(key, range)));
+  return [...request.listedKeys, ...rangeKeys].sort();
+}
+
+function chargeFor(key, trie, request, width) {
+  const end = walkTrie(trie, key);
+  if (end.type !== "leaf") return 0;
+  const leafKind = chooseLeafKind(end, request);
+  const suffixBytes = shipsKeySuffix(leafKind) ? Math.ceil((width - end.path.length) / 8) : 0;
+  const valueBytes = leafKind === "ValueHash" ? HASH_SIZE : shipsValue(leafKind) ? end.value.length : 0;
+  return 1 + suffixBytes + valueBytes;
+}
+
+function cutQueryAt(query, lastKey) {
+  return {
+    ...query,
+    listedKeys: query.listedKeys.filter((key) => key <= lastKey),
+    ranges: query.ranges
+      .filter((range) => range.start <= lastKey)
+      .map((range) => ({ ...range, end: range.end < lastKey ? range.end : lastKey })),
+  };
+}
+
+function truncateQuery(trie, stateKeys, request, width, sizeLimit) {
+  const charges = [];
+  let total = 0;
+  for (const key of chargedKeys(stateKeys, request)) {
+    const charge = chargeFor(key, trie, request, width);
+    const fits = charges.length === 0 || total + charge <= sizeLimit;
+    charges.push({ key, charge, included: fits });
+    if (!fits) break;
+    total += charge;
+  }
+  const included = charges.filter((entry) => entry.included);
+  const complete = included.length === charges.length;
+  const provenThrough = complete ? null : included.at(-1).key;
+  return { charges, total, complete, provenThrough, cutQuery: complete ? request : cutQueryAt(request, provenThrough) };
+}
+
+function proveQuery(state, request, sizeLimit) {
+  const truncation = sizeLimit === null ? null : truncateQuery(state.trie, state.stateKeys, request, state.width, sizeLimit);
+  const provedQuery = truncation?.cutQuery ?? request;
+  const proofTree = expandForQuery(state.trie, provedQuery, state.width, request);
+  const encoded = encodeProof(proofTree);
+  return {
+    request,
+    provedQuery,
+    truncation,
+    proofTree,
+    encoded,
+    verdicts: provedQuery.listedKeys.map((key) => verdictFor(key, proofTree)),
+    coverage: provedQuery.ranges.map((range) => rangeCoverage(range, encoded)),
+    bytes: estimateBytes(encoded, request, state.width),
+  };
+}
+
+function leafDepths(trie) {
+  return new Map(trieNodes(trie).filter((node) => node.type === "leaf").map((leaf) => [leaf.key, leaf.path.length]));
+}
+
+function diffTries(previous, current) {
+  const before = leafDepths(previous.trie);
+  const after = leafDepths(current.trie);
+  return {
+    widthChange: previous.width === current.width ? null : `${previous.width} → ${current.width}`,
+    added: [...after.keys()].filter((key) => !before.has(key)),
+    removed: [...before.keys()].filter((key) => !after.has(key)),
+    depthChanges: [...after]
+      .filter(([key, depth]) => before.has(key) && before.get(key) !== depth)
+      .map(([key, depth]) => `${key} ${before.get(key)} → ${depth}`),
+  };
+}
+
+function makeState(parsedKeys) {
+  const stateKeys = parsedKeys.entries.map((entry) => entry.key);
+  return { ...parsedKeys, stateKeys, trie: buildTrie(stateKeys) };
+}
+
+function describeProofForTree(proofTree, query) {
+  const tagByPath = new Map(preOrder(proofTree).map((proofNode) => [proofNode.node.path, proofNode.tag]));
+  const endingKeys = new Map();
+  const pathEdges = new Set();
+  for (const key of query.listedKeys) {
+    const endPath = lookupInProof(proofTree, key).node.path;
+    for (let depth = 1; depth <= endPath.length; depth++) pathEdges.add(endPath.slice(0, depth));
+    endingKeys.set(endPath, [...(endingKeys.get(endPath) ?? []), key]);
+  }
+  return { tagByPath, endingKeys, pathEdges };
+}
+
+const LEVEL_GAP = 66;
+const TOP_MARGIN = 22;
+const BOTTOM_MARGIN = 40;
+const BRANCH_RADIUS = 12;
+const EMPTY_RADIUS = 10;
+const CARD_HEIGHT = 24;
+
+function leafCardWidth(width) {
+  return Math.round(width * 7.6 + 18);
+}
+
+function layoutTree(trie, width) {
+  const slotWidth = Math.max(60, leafCardWidth(width) + 14);
+  const placed = [];
+  let nextSlot = 0;
+  let maxDepth = 0;
+  function place(node, parent) {
+    const depth = node.path.length;
+    const entry = { node, parent, y: TOP_MARGIN + depth * LEVEL_GAP };
+    maxDepth = Math.max(maxDepth, depth);
+    if (node.type === "branch") {
+      const left = place(node.left, entry);
+      const right = place(node.right, entry);
+      entry.x = (left.x + right.x) / 2;
+    } else {
+      entry.x = slotWidth * (nextSlot + 0.5);
+      nextSlot += 1;
+    }
+    placed.push(entry);
+    return entry;
+  }
+  place(trie, null);
+  return {
+    placed,
+    cardWidth: leafCardWidth(width),
+    width: nextSlot * slotWidth,
+    height: TOP_MARGIN + maxDepth * LEVEL_GAP + CARD_HEIGHT / 2 + BOTTOM_MARGIN,
+  };
+}
+
+function nodeHalfHeight(node) {
+  if (node.type === "leaf") return CARD_HEIGHT / 2;
+  return node.type === "empty" ? EMPTY_RADIUS : BRANCH_RADIUS;
+}
+
+function stateClass(path, proofView) {
+  if (!proofView) return "";
+  const tag = proofView.tagByPath.get(path);
+  return tag ? `tag-${tag}` : "is-dimmed";
+}
+
+function renderEdge({ node, parent, x, y }, proofView) {
+  const bit = node.path.at(-1);
+  const startY = parent.y + BRANCH_RADIUS;
+  const endY = y - nodeHalfHeight(node);
+  const onPath = proofView?.pathEdges.has(node.path);
+  const edgeClass = onPath ? "on-path" : proofView && !proofView.tagByPath.has(node.path) ? "is-dimmed" : "";
+  const labelX = (parent.x + x) / 2 + (bit === "0" ? -8 : 8);
+  return `<g class="edge ${edgeClass}"><line x1="${parent.x}" y1="${startY}" x2="${x}" y2="${endY}"/>` +
+    `<text class="edge-bit" x="${labelX}" y="${(startY + endY) / 2 + 4}">${bit}</text></g>`;
+}
+
+function renderShape(node, x, y, cardWidth, tag) {
+  if (node.type === "empty") {
+    return `<circle class="shape" cx="${x}" cy="${y}" r="${EMPTY_RADIUS}"/><text x="${x}" y="${y + 4}">∅</text>`;
+  }
+  if (node.type === "leaf") {
+    return `<title>leaf ${node.key} at depth ${node.path.length}</title>` +
+      `<rect class="shape" x="${x - cardWidth / 2}" y="${y - CARD_HEIGHT / 2}" width="${cardWidth}" height="${CARD_HEIGHT}" rx="5"/>` +
+      `<text class="leaf-key" x="${x}" y="${y + 4}">${node.key}</text>`;
+  }
+  const label = tag === "H" ? `h(${nodeLabel(node)})` : nodeLabel(node);
+  return `<circle class="shape" cx="${x}" cy="${y}" r="${BRANCH_RADIUS}"/>` +
+    `<text class="node-label" x="${x + BRANCH_RADIUS + 4}" y="${y - BRANCH_RADIUS + 2}">${label}</text>`;
+}
+
+function renderEndMark(node, x, y, cardWidth, keys) {
+  const halfHeight = nodeHalfHeight(node);
+  const ring = node.type === "leaf"
+    ? `<rect class="end-ring" x="${x - cardWidth / 2 - 4}" y="${y - halfHeight - 4}" width="${cardWidth + 8}" height="${CARD_HEIGHT + 8}" rx="8"/>`
+    : `<circle class="end-ring" cx="${x}" cy="${y}" r="${halfHeight + 5}"/>`;
+  return `${ring}<text class="end-label" x="${x}" y="${y + halfHeight + 18}">ends: ${keys.join(", ")}</text>`;
+}
+
+function renderNode({ node, x, y }, cardWidth, proofView) {
+  const tag = proofView?.tagByPath.get(node.path);
+  const endingKeys = proofView?.endingKeys.get(node.path);
+  const endMark = endingKeys ? renderEndMark(node, x, y, cardWidth, endingKeys) : "";
+  return `<g class="${node.type} ${stateClass(node.path, proofView)}">${renderShape(node, x, y, cardWidth, tag)}</g>${endMark}`;
+}
+
+function renderTree(layout, proofView, caption) {
+  const edges = layout.placed.filter((entry) => entry.parent).map((entry) => renderEdge(entry, proofView)).join("");
+  const nodes = layout.placed.map((entry) => renderNode(entry, layout.cardWidth, proofView)).join("");
+  return `<svg class="trie" width="${layout.width}" height="${layout.height}" viewBox="0 0 ${layout.width} ${layout.height}" role="img" aria-label="${caption}">${edges}${nodes}</svg>`;
+}
+
+function card(title, body, wide = false) {
+  return `<article class="card${wide ? " wide" : ""}"><h3>${title}</h3>${body}</article>`;
+}
+
+function table(headers, rows) {
+  if (rows.length === 0) return `<p class="hint">None.</p>`;
+  const head = headers.map((header) => `<th>${header}</th>`).join("");
+  const body = rows.map((cells) => `<tr>${cells.map((cell) => `<td class="mono">${cell}</td>`).join("")}</tr>`).join("");
+  return `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+}
+
+const KIND_DESCRIPTIONS = {
+  Full: "Full: key suffix and value shipped",
+  ValueHash: "ValueHash: key suffix and the value's hash shipped",
+  KeyElided: "KeyElided: value shipped, key from the caller",
+  FullyElided: "FullyElided: key and value from the caller",
+};
+
+function renderTagsCard({ tags, packedTags }) {
+  const cells = tags.map((tag) => `<span class="tag-cell tag-${tag}"><b>${tag}</b><small>${TAG_CODES[tag]}</small></span>`).join("");
+  const paddingBits = packedTags.length * 4 - 2 * tags.length;
+  return card("tags", `<div class="tag-stream">${cells}</div>` +
+    `<p class="hint">Packed as <code>${packedTags}</code>: ${tags.length} tags and ${paddingBits} padding bits.</p>`, true);
+}
+
+function renderKindsCard({ leaves }) {
+  const rows = leaves.map((leaf) => [leaf.key, KIND_DESCRIPTIONS[leaf.leafKind], `0x${leaf.octet.toString(16).padStart(2, "0")}`]);
+  return card("kinds", table(["leaf", "kind", "octet"], rows));
+}
+
+function renderHashesCard({ hashes }) {
+  const body = hashes.length === 0 ? `<p class="hint">None.</p>` : `<ol class="hash-list">${hashes.map((hash) => `<li>${hash}</li>`).join("")}</ol>`;
+  return card("hashes", body);
+}
+
+function renderKeysCard({ leaves }, width) {
+  const rows = leaves.map((leaf) => [
+    leaf.key,
+    String(leaf.depth),
+    leaf.suffix === null ? "from caller" : `${leaf.suffix || "(none)"}, ${width - leaf.depth} bits`,
+  ]);
+  return card("keys", table(["leaf", "depth", "suffix shipped"], rows));
+}
+
+function renderValuesCard({ leaves }) {
+  const rows = leaves.map((leaf) => [leaf.key, leaf.value ?? (leaf.leafKind === "ValueHash" ? "in hashes" : "from caller")]);
+  return card("values", table(["leaf", "value"], rows));
+}
+
+function renderLookupsCard(verdicts, coverage) {
+  const verdictRows = verdicts.map(({ key, outcome, detail }) => [key, outcome, detail]);
+  const rangeRows = coverage.map(({ range, coveredKeys }) => [
+    `${range.start} – ${range.end}`,
+    coveredKeys.length === 0 ? "no leaves" : coveredKeys.join(", "),
+  ]);
+  return card("lookups", table(["listed key", "verdict", "why"], verdictRows) +
+    (rangeRows.length ? table(["range", "leaves it covers"], rangeRows) : ""));
+}
+
+function renderBytesCard(bytes) {
+  const rows = (parts, total) => [...parts.map(([label, size]) => `<tr><td>${label}</td><td class="mono">${size}</td></tr>`),
+    `<tr class="total-row"><td>total</td><td class="mono">${total}</td></tr>`].join("");
+  const ratio = bytes.oldTotal === 0 ? "" : `, ${Math.round((100 * bytes.compactTotal) / bytes.oldTotal)}% of the old format`;
+  return card("size estimate (octets)",
+    `<table><tbody><tr><th colspan="2">compact proof${ratio}</th></tr>${rows(bytes.parts, bytes.compactTotal)}</tbody></table>` +
+    `<table><tbody><tr><th colspan="2">old format: whole nodes plus pairs</th></tr>${rows(bytes.oldParts, bytes.oldTotal)}</tbody></table>`);
+}
+
+function renderSections(result, width) {
+  const { encoded } = result;
+  return [
+    renderTagsCard(encoded),
+    renderKindsCard(encoded),
+    renderHashesCard(encoded),
+    renderKeysCard(encoded, width),
+    renderValuesCard(encoded),
+    renderLookupsCard(result.verdicts, result.coverage),
+    renderBytesCard(result.bytes),
+  ].join("");
+}
+
+function describeQuery(query) {
+  const keys = query.listedKeys.length ? query.listedKeys.join(", ") : "none";
+  const ranges = query.ranges.length ? query.ranges.map((range) => `[${range.start}, ${range.end}]`).join(", ") : "none";
+  return `keys ${keys} · ranges ${ranges} · known ${query.known}`;
+}
+
+function describeTruncation(truncation) {
+  if (!truncation) return "";
+  const charges = truncation.charges.map(({ key, charge, included }) => `${key}: ${charge}${included ? "" : " (does not fit)"}`).join(", ");
+  const outcome = truncation.complete
+    ? "complete: true"
+    : `complete: false, proven_through: ${truncation.provenThrough}; proof below is for the cut query: ${describeQuery(truncation.cutQuery)}`;
+  return `Charged keys ${charges || "none"}; included total ${truncation.total}. ${outcome}.`;
+}
+
+function describeDiff(diff) {
+  const list = (items) => (items.length ? items.join(", ") : "none");
+  const width = diff.widthChange ? `key width ${diff.widthChange}; ` : "";
+  return `Since the previous trie: ${width}added ${list(diff.added)}; removed ${list(diff.removed)}; depth changes ${list(diff.depthChanges)}.`;
+}
+
+const page = { current: null, previous: null };
+
+function element(id) {
+  return document.getElementById(id);
+}
+
+function showError(id, error) {
+  if (!(error instanceof InputError)) throw error;
+  element(id).textContent = error.message;
+}
+
+function readQueryInput() {
+  return { keysText: element("query-keys").value, rangesText: element("query-ranges").value, known: element("query-known").value };
+}
+
+function rebuildTrie() {
+  element("trie-error").textContent = "";
+  try {
+    const next = makeState(parseKeys(element("trie-keys").value));
+    page.previous = page.current;
+    page.current = next;
+  } catch (error) {
+    showError("trie-error", error);
+  }
+  renderAll();
+}
+
+function renderTrieSummary() {
+  const { width, entries } = page.current;
+  const keys = entries.map(({ typed, key }) => (typed === key ? key : `${typed} → ${key}`)).join(", ");
+  element("trie-summary").textContent = `W = ${width} · ${entries.length} keys: ${keys || "none (empty state)"}`;
+}
+
+function renderPrevious() {
+  const showPrevious = Boolean(page.previous) && element("show-previous").checked;
+  element("previous-panel").hidden = !showPrevious;
+  element("tree-pair").classList.toggle("has-previous", showPrevious);
+  element("trie-diff").textContent = page.previous ? describeDiff(diffTries(page.previous, page.current)) : "";
+  if (showPrevious) {
+    element("previous-tree").innerHTML = renderTree(layoutTree(page.previous.trie, page.previous.width), null, "Previous trie");
+  }
+}
+
+function renderProof() {
+  element("query-error").textContent = "";
+  try {
+    const request = parseQuery(readQueryInput(), page.current.width);
+    const result = proveQuery(page.current, request, parseSizeLimit(element("size-limit").value));
+    element("query-summary").textContent = `Padded query: ${describeQuery(request)}`;
+    element("truncation").textContent = describeTruncation(result.truncation);
+    element("proof-sections").innerHTML = renderSections(result, page.current.width);
+    return describeProofForTree(result.proofTree, result.provedQuery);
+  } catch (error) {
+    showError("query-error", error);
+    element("query-summary").textContent = "";
+    element("truncation").textContent = "";
+    element("proof-sections").innerHTML = `<p class="hint">Fix the query above to see its proof.</p>`;
+    return null;
+  }
+}
+
+const SHOW_PROOF_STORAGE_KEY = "toy-jam-trie.show-proof";
+
+function loadShowProof() {
+  try {
+    return localStorage.getItem(SHOW_PROOF_STORAGE_KEY) !== "false";
+  } catch {
+    return true;
+  }
+}
+
+function saveShowProof(showProof) {
+  try {
+    localStorage.setItem(SHOW_PROOF_STORAGE_KEY, String(showProof));
+  } catch {}
+}
+
+function applyShowProof() {
+  const showProof = element("show-proof").checked;
+  for (const proofOnly of document.querySelectorAll("[data-proof-only]")) proofOnly.hidden = !showProof;
+  return showProof;
+}
+
+function renderAll() {
+  renderTrieSummary();
+  const proofView = applyShowProof() ? renderProof() : null;
+  element("current-tree").innerHTML = renderTree(layoutTree(page.current.trie, page.current.width), proofView, "Current trie");
+  renderPrevious();
+}
+
+function applyQuery(query) {
+  element("query-keys").value = query.keys;
+  element("query-ranges").value = query.ranges;
+  element("query-known").value = "none";
+  element("size-limit").value = "";
+}
+
+function renderPresetQueryButtons(preset) {
+  const container = element("preset-query-buttons");
+  container.replaceChildren();
+  preset.queries.forEach((query, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.id = `preset-query-${index}`;
+    button.textContent = query.name;
+    button.addEventListener("click", () => {
+      applyQuery(query);
+      renderAll();
+    });
+    container.append(button);
+  });
+}
+
+function loadPreset(preset) {
+  for (const button of element("preset-buttons").children) {
+    button.setAttribute("aria-pressed", String(button.id === `preset-${preset.id}`));
+  }
+  renderPresetQueryButtons(preset);
+  element("trie-keys").value = preset.keys;
+  applyQuery(preset.queries[0]);
+  rebuildTrie();
+}
+
+function startPage() {
+  for (const preset of PRESETS) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.id = `preset-${preset.id}`;
+    button.textContent = preset.name;
+    button.addEventListener("click", () => loadPreset(preset));
+    element("preset-buttons").append(button);
+  }
+  element("trie-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    rebuildTrie();
+  });
+  for (const id of ["query-keys", "query-ranges", "query-known", "size-limit"]) {
+    element(id).addEventListener("input", renderAll);
+  }
+  element("show-previous").addEventListener("change", renderPrevious);
+  element("show-proof").checked = loadShowProof();
+  element("show-proof").addEventListener("change", () => {
+    saveShowProof(element("show-proof").checked);
+    renderAll();
+  });
+  loadPreset(PRESETS[0]);
+}
+
+startPage();
+</script>
+</body>
+</html>
