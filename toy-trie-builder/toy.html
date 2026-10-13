@@ -23,6 +23,8 @@ img{max-width:100%}
   --on-hash: #ffffff;
   --leaf: #f3b64a;
   --leaf-fill: #fff1d6;
+  --known: #2e8b57;
+  --known-fill: #e6f4ec;
   --path: #d97706;
   --error: #b42318;
   --font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -40,6 +42,8 @@ img{max-width:100%}
     --on-hash: #0b1220;
     --leaf: #e0a53a;
     --leaf-fill: #3a2e14;
+    --known: #5cc08a;
+    --known-fill: #16301f;
     --path: #f0a640;
     --error: #ff8a80;
     color-scheme: dark;
@@ -55,6 +59,8 @@ img{max-width:100%}
   --on-hash: #0b1220;
   --leaf: #e0a53a;
   --leaf-fill: #3a2e14;
+  --known: #5cc08a;
+  --known-fill: #16301f;
   --path: #f0a640;
   --error: #ff8a80;
   color-scheme: dark;
@@ -79,12 +85,15 @@ body {
 h1 { font-size: 22px; margin: 0 0 4px; font-weight: 600; }
 h2 { font-size: 17px; margin: 0; font-weight: 600; }
 h3 { font-size: 13px; margin: 0 0 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+h4 { font-size: 13px; margin: 10px 0 4px; font-weight: 600; }
 p { margin: 0; }
 .lede { color: var(--muted); max-width: 70ch; }
 .mono, code, input, select { font-family: var(--font-mono); }
 .hint { color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
 .error { color: var(--error); font-size: 13px; }
 .error:empty { display: none; }
+.pass { color: var(--known); font-weight: 600; }
+.fail { color: var(--error); font-weight: 600; }
 
 .panel, .card, .tree-panel {
   background: var(--panel);
@@ -117,7 +126,7 @@ button[aria-pressed="true"] { border-color: var(--hash); color: var(--hash); }
 :focus-visible { outline: 2px solid var(--hash); outline-offset: 2px; }
 .button-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .proof-inputs { display: grid; gap: 12px; }
-.query-grid { display: grid; grid-template-columns: 2fr 2fr 1fr 1fr; gap: 10px; }
+.query-grid { display: grid; grid-template-columns: 2fr 2fr 1fr; gap: 10px; }
 .checkbox { display: inline-flex; gap: 6px; align-items: center; font-weight: 400; }
 .checkbox input { width: auto; }
 
@@ -144,13 +153,17 @@ button[aria-pressed="true"] { border-color: var(--hash); color: var(--hash); }
 .trie .leaf .shape { fill: var(--leaf-fill); stroke: var(--leaf); }
 .trie .leaf-key { font-size: 12px; text-anchor: middle; font-weight: 500; }
 .trie .node-label { font-size: 11px; fill: var(--muted); }
+.trie .tag-letter { font-size: 11px; font-weight: 600; fill: var(--muted); }
 .trie .tag-B .shape { stroke-width: 2.5; }
 .trie .tag-H .shape { fill: var(--hash); stroke: var(--hash); }
 .trie .tag-H .leaf-key { fill: var(--on-hash); }
-.trie .tag-H .node-label { fill: var(--hash); font-weight: 600; }
-.trie .tag-E .shape { stroke: var(--ink); stroke-width: 1.5; }
-.trie .tag-E text { fill: var(--ink); }
-.trie .tag-L .shape { stroke-width: 2.5; }
+.trie .tag-H .node-label, .trie .tag-H .tag-letter { fill: var(--hash); font-weight: 600; }
+.trie .tag-K .shape { fill: var(--known-fill); stroke: var(--known); stroke-width: 2.5; }
+.trie .empty.tag-K .shape { fill: var(--panel); stroke-width: 2; }
+.trie .tag-K text, .trie .tag-K .node-label, .trie .tag-K .tag-letter { fill: var(--known); }
+.trie .tag-K .leaf-key { fill: var(--ink); }
+.trie .tag-R .shape { stroke-width: 2.5; }
+.trie .tag-R .tag-letter { fill: var(--ink); }
 .trie .end-ring { fill: none; stroke: var(--path); stroke-width: 2; }
 .trie .end-label { font-size: 11px; fill: var(--path); text-anchor: middle; font-weight: 600; }
 .trie .is-dimmed { opacity: 0.28; }
@@ -158,13 +171,16 @@ button[aria-pressed="true"] { border-color: var(--hash); color: var(--hash); }
 .legend .shape { fill: var(--panel); stroke: var(--ink); stroke-width: 1.5; }
 .legend .shape.hash { fill: var(--hash); stroke: var(--hash); }
 .legend .shape.leaf { fill: var(--leaf-fill); stroke: var(--leaf); stroke-width: 2; }
+.legend .shape.known { fill: var(--known-fill); stroke: var(--known); stroke-width: 2; }
 .legend .shape.empty { stroke: var(--muted); stroke-dasharray: 3 3; }
+.legend .shape.known-empty { fill: var(--panel); stroke: var(--known); stroke-width: 2; stroke-dasharray: 3 3; }
 .legend .shape.dimmed { opacity: 0.28; }
 .legend .path-line { stroke: var(--path); stroke-width: 3; }
 
 .sections { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
 .card { padding: 12px 14px; min-width: 0; }
 .card.wide { grid-column: 1 / -1; }
+.card.failed { border-color: var(--error); }
 .tag-stream { display: flex; flex-wrap: wrap; gap: 4px; font-family: var(--font-mono); }
 .tag-cell {
   display: grid;
@@ -177,14 +193,15 @@ button[aria-pressed="true"] { border-color: var(--hash); color: var(--hash); }
 .tag-cell b { font-size: 15px; }
 .tag-cell small { font-size: 11px; color: var(--muted); }
 .tag-cell.tag-H { border-color: var(--hash); color: var(--hash); }
-.tag-cell.tag-L { border-color: var(--leaf); background: var(--leaf-fill); }
-.tag-cell.tag-E { border-style: dashed; }
+.tag-cell.tag-K { border-color: var(--known); color: var(--known); background: var(--known-fill); }
+.tag-cell.tag-R { border-color: var(--leaf); background: var(--leaf-fill); }
 table { border-collapse: collapse; width: 100%; font-size: 13px; }
 th, td { text-align: left; padding: 3px 8px 3px 0; vertical-align: top; overflow-wrap: anywhere; }
 th { font-weight: 500; color: var(--muted); }
 td.mono, td code { font-family: var(--font-mono); }
 ol.hash-list { margin: 0; padding-left: 22px; font-family: var(--font-mono); font-size: 13px; }
-.card p + p, .card table + p, .card p + table { margin-top: 8px; }
+.card p + p, .card table + p, .card p + table, .card table + table { margin-top: 8px; }
+.layout { font-family: var(--font-mono); font-size: 12px; overflow-wrap: anywhere; }
 .total-row td { border-top: 1px solid var(--line); font-weight: 600; }
 .footnote { font-size: 12px; color: var(--muted); max-width: 80ch; }
 
@@ -196,13 +213,14 @@ ol.hash-list { margin: 0; padding-left: 22px; font-family: var(--font-mono); fon
   .query-grid { grid-template-columns: minmax(0, 1fr); }
   .input-row { flex-direction: column; }
 }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
 </style>
-</head>
-<body>
 <main class="page">
   <header>
     <h1>Toy JAM Trie</h1>
-    <p class="lede">Type a few short binary keys to build the Gray Paper's state trie M(), then a query to see the JIP-6 compact proof for it: which nodes are expanded, hashed, empty or leaves, and the five sections the proof ships.</p>
+    <p class="lede">Type a few short binary keys to build the Gray Paper's state trie M(), then a query to see its JIP-6 compact state proof: the entries delivered beside the proof, the proof subtree with its B, H, K and R tags, the four encoded sections, and what a verifier rebuilds and concludes from them.</p>
   </header>
 
   <section class="panel" aria-label="Inputs">
@@ -227,24 +245,16 @@ ol.hash-list { margin: 0; padding-left: 22px; font-family: var(--font-mono); fon
     <div class="proof-inputs" id="proof-inputs" data-proof-only>
       <div class="query-grid">
         <div class="field">
-          <label for="query-keys">Listed keys</label>
-          <input id="query-keys" autocomplete="off" spellcheck="false" placeholder="110, 010">
+          <label for="query-keys">Listed keys (ascending)</label>
+          <input id="query-keys" autocomplete="off" spellcheck="false" placeholder="010, 101">
         </div>
         <div class="field">
-          <label for="query-ranges">Ranges (start-end)</label>
+          <label for="query-ranges">Ranges (start-end prefixes)</label>
           <input id="query-ranges" autocomplete="off" spellcheck="false" placeholder="001-110, 01-01, -">
         </div>
         <div class="field">
-          <label for="query-known">Known mode</label>
-          <select id="query-known">
-            <option value="none">none</option>
-            <option value="keys">keys</option>
-            <option value="keys_and_values">keys_and_values</option>
-          </select>
-        </div>
-        <div class="field">
           <label for="size-limit">Size limit (octets)</label>
-          <input id="size-limit" type="number" min="1" step="1" placeholder="no limit">
+          <input id="size-limit" type="number" min="0" step="1" placeholder="no limit">
         </div>
       </div>
       <p class="error" id="query-error" aria-live="polite"></p>
@@ -259,16 +269,19 @@ ol.hash-list { margin: 0; padding-left: 22px; font-family: var(--font-mono); fon
     </div>
     <p class="hint" id="trie-diff"></p>
     <div class="legend" aria-label="Legend">
-      <span><svg width="16" height="16" viewBox="0 0 16 16"><circle class="shape" cx="8" cy="8" r="6"/></svg>branch<span data-proof-only> (recomputed)</span></span>
-      <span data-proof-only><svg width="16" height="16" viewBox="0 0 16 16"><circle class="shape hash" cx="8" cy="8" r="6"/></svg>shipped hash (H)</span>
-      <span><svg width="22" height="16" viewBox="0 0 22 16"><rect class="shape leaf" x="1" y="2" width="20" height="12" rx="3"/></svg><span data-proof-only>shipped </span>leaf<span data-proof-only> (L)</span></span>
-      <span><svg width="16" height="16" viewBox="0 0 16 16"><circle class="shape empty" cx="8" cy="8" r="6"/></svg>empty<span data-proof-only> (E)</span></span>
-      <span data-proof-only><svg width="16" height="16" viewBox="0 0 16 16"><circle class="shape dimmed" cx="8" cy="8" r="6"/></svg>not in the proof</span>
+      <span data-trie-only><svg width="16" height="16" viewBox="0 0 16 16"><circle class="shape" cx="8" cy="8" r="6"/></svg>branch</span>
+      <span data-trie-only><svg width="22" height="16" viewBox="0 0 22 16"><rect class="shape leaf" x="1" y="2" width="20" height="12" rx="3"/></svg>leaf</span>
+      <span data-trie-only><svg width="16" height="16" viewBox="0 0 16 16"><circle class="shape empty" cx="8" cy="8" r="6"/></svg>empty subtree</span>
+      <span data-proof-only><svg width="16" height="16" viewBox="0 0 16 16"><circle class="shape" cx="8" cy="8" r="6"/></svg>B expanded, recomputed</span>
+      <span data-proof-only><svg width="16" height="16" viewBox="0 0 16 16"><circle class="shape hash" cx="8" cy="8" r="6"/></svg>H shipped hash</span>
+      <span data-proof-only><svg width="16" height="16" viewBox="0 0 16 16"><circle class="shape known" cx="8" cy="8" r="6"/></svg><svg width="16" height="16" viewBox="0 0 16 16"><circle class="shape known-empty" cx="8" cy="8" r="6"/></svg>K known, rebuilt from entries (dashed: empty)</span>
+      <span data-proof-only><svg width="22" height="16" viewBox="0 0 22 16"><rect class="shape leaf" x="1" y="2" width="20" height="12" rx="3"/></svg>R raw leaf in the proof</span>
+      <span data-proof-only><svg width="16" height="16" viewBox="0 0 16 16"><circle class="shape dimmed" cx="8" cy="8" r="6"/></svg>not in the proof subtree</span>
       <span data-proof-only><svg width="22" height="16" viewBox="0 0 22 16"><line class="path-line" x1="1" y1="8" x2="21" y2="8"/></svg>listed key's path</span>
     </div>
     <div class="tree-pair" id="tree-pair">
       <figure class="tree-panel">
-        <figcaption>Current trie<span data-proof-only>, coloured by the proof</span></figcaption>
+        <figcaption>Current trie<span data-proof-only>, coloured by the proof subtree</span></figcaption>
         <div class="tree-scroll" id="current-tree"></div>
       </figure>
       <figure class="tree-panel" id="previous-panel" hidden>
@@ -280,20 +293,24 @@ ol.hash-list { margin: 0; padding-left: 22px; font-family: var(--font-mono); fon
 
   <section class="proof-section" id="proof-section" aria-label="Proof" data-proof-only>
     <h2>Proof</h2>
+    <p class="error" id="self-check-error" role="alert"></p>
     <p class="hint" id="truncation"></p>
     <div class="sections" id="proof-sections"></div>
-    <p class="footnote">At toy scale every value is <code>v</code> plus at most 16 key bits, so at most 17 octets. Every leaf value is therefore embedded, and the hash-only form (for a leaf in the proof whose value was not asked for and is longer than 32 octets) never appears here, nor does the long form. Hashes are labels, not real blake2b output, and key suffixes are <code>W − d</code> bits instead of <code>248 − d</code>.</p>
+    <p class="footnote">At toy scale the key width W stands in for the JIP's 248 bits: raw key suffixes are W − d bits and a key takes ⌈W/8⌉ octets. Every value is <code>v</code> plus at most 16 key bits, so at most 17 octets, and every raw value therefore uses an embedded form octet (its length); form 33, the 32-octet hash of a value longer than 32 octets, is implemented but never produced here. Hash labels such as <code>h(N10)</code> name toy 32-octet hashes, not blake2b output; the labels do not show the cleared bit 7 of a left child's hash, which is irrelevant at toy scale, but the toy hex does clear it.</p>
   </section>
 </main>
 
 <script>
 const MIN_WIDTH = 3;
 const MAX_WIDTH = 16;
-const EMBEDDED_LIMIT = 32;
 const HASH_SIZE = 32;
+const MAX_EMBEDDED_VALUE = 32;
+const VALUE_HASH_FORM = 33;
+const PROOF_VERSION = 0;
 const OLD_NODE_SIZE = 64;
-const TAG_CODES = { B: "00", H: "01", E: "10", L: "11" };
-const KIND_FOR_KNOWN_MODE = { none: "Full", keys: "KeyElided", keys_and_values: "FullyElided" };
+const TAG_CODES = { B: "00", H: "01", K: "10", R: "11" };
+const TAG_BY_CODE = Object.fromEntries(Object.entries(TAG_CODES).map(([tag, code]) => [code, tag]));
+const ZERO_HASH = new Uint8Array(HASH_SIZE);
 
 const PRESETS = [
   {
@@ -301,10 +318,14 @@ const PRESETS = [
     name: "JIP-6 test vectors",
     keys: "000,001,100,110,111",
     queries: [
-      { name: "key 110", keys: "110", ranges: "" },
-      { name: "keys 001, 111", keys: "001,111", ranges: "" },
-      { name: "range 001-110", keys: "", ranges: "001-110" },
-      { name: "keys 010, 101 (absent)", keys: "010,101", ranges: "" },
+      { name: "1: key 110", keys: "110", ranges: "" },
+      { name: "2: keys 001, 111", keys: "001,111", ranges: "" },
+      { name: "3: range 001-110", keys: "", ranges: "001-110" },
+      { name: "4: range 100-111", keys: "", ranges: "100-111" },
+      { name: "5: keys 010, 101 (absent)", keys: "010,101", ranges: "" },
+      { name: "6: empty state", state: "", keys: "110", ranges: "" },
+      { name: "7: empty query", keys: "", ranges: "" },
+      { name: "8: single-key state", state: "110", keys: "110", ranges: "" },
     ],
   },
   {
@@ -314,6 +335,7 @@ const PRESETS = [
     queries: [
       { name: "key 000000010011", keys: "000000010011", ranges: "" },
       { name: "key 000000100000 (absent)", keys: "000000100000", ranges: "" },
+      { name: "range 00000000-00000000", keys: "", ranges: "00000000-00000000" },
     ],
   },
   {
@@ -322,12 +344,36 @@ const PRESETS = [
     keys: "00001000011,00000000011",
     queries: [
       { name: "key 00001000011", keys: "00001000011", ranges: "" },
+      { name: "key 00000100000 (absent)", keys: "00000100000", ranges: "" },
       { name: "whole trie", keys: "", ranges: "-" },
     ],
   },
 ];
 
+const CANONICAL_RULES = [
+  "the proof is not empty and the tags complete the subtree",
+  "no padding bit of the tags section is set",
+  "no B is at depth W or deeper",
+  "no B has two H, two K, or an empty K and an R as children",
+  "no H carries the zero hash",
+  "no H that is a left child has bit 7 of octet 0 set",
+  "no padding bit of the raw_keys section is set",
+  "no form octet is greater than 33",
+  "no R holds the key of an entry",
+  "no section is short and no octets remain after the last R",
+  "the entries are in strictly ascending order of key",
+  "every entry lies under a K",
+  "the root hash equals the trusted state root",
+];
+
 class InputError extends Error {}
+
+class ProofRejection extends Error {
+  constructor(rule, message) {
+    super(message);
+    this.rule = rule;
+  }
+}
 
 function splitList(text) {
   return text.split(",").map((item) => item.trim()).filter((item) => item !== "");
@@ -337,23 +383,104 @@ function sum(numbers) {
   return numbers.reduce((total, number) => total + number, 0);
 }
 
+function bitsToOctets(bits) {
+  const padded = bits.padEnd(Math.ceil(bits.length / 8) * 8, "0");
+  return Uint8Array.from(padded.match(/.{8}/g) ?? [], (octet) => parseInt(octet, 2));
+}
+
+function octetsToBits(octets) {
+  return Array.from(octets, (octet) => octet.toString(2).padStart(8, "0")).join("");
+}
+
+function toHex(octets) {
+  return Array.from(octets, (octet) => octet.toString(16).padStart(2, "0")).join("");
+}
+
+function concatOctets(...parts) {
+  const joined = new Uint8Array(sum(parts.map((part) => part.length)));
+  let offset = 0;
+  for (const part of parts) {
+    joined.set(part, offset);
+    offset += part.length;
+  }
+  return joined;
+}
+
+function textOctets(text) {
+  return new TextEncoder().encode(text);
+}
+
+function octetsText(octets) {
+  return new TextDecoder().decode(octets);
+}
+
+function sameOctets(first, second) {
+  return first.length === second.length && first.every((octet, index) => octet === second[index]);
+}
+
+function isZeroHash(hash) {
+  return hash.every((octet) => octet === 0);
+}
+
+function clearTopBit(hash) {
+  const cleared = Uint8Array.from(hash);
+  cleared[0] &= 0x7f;
+  return cleared;
+}
+
+function isLeftChild(path) {
+  return path.endsWith("0");
+}
+
+function toyHash(octets) {
+  const digest = new Uint8Array(HASH_SIZE);
+  const view = new DataView(digest.buffer);
+  for (let lane = 0; lane < HASH_SIZE / 4; lane++) {
+    let state = Math.imul(lane + 1, 0x9e3779b1) ^ 0x811c9dc5;
+    for (const octet of octets) state = Math.imul(state ^ octet, 0x01000193);
+    state = Math.imul(state ^ (state >>> 16), 0x85ebca6b);
+    state = Math.imul(state ^ (state >>> 13), 0xc2b2ae35);
+    view.setUint32(lane * 4, (state ^ (state >>> 16)) >>> 0);
+  }
+  return digest;
+}
+
+function valueForm(value) {
+  if (value.length <= MAX_EMBEDDED_VALUE) return { form: value.length, data: value };
+  return { form: VALUE_HASH_FORM, data: toyHash(value) };
+}
+
+function leafHash(key, { form, data }) {
+  const head = form === VALUE_HASH_FORM ? 0xc0 : 0x80 | form;
+  return toyHash(concatOctets(Uint8Array.of(head), bitsToOctets(key), data));
+}
+
+function branchHash(leftHash, rightHash) {
+  // The GP's branch node stores the left child's hash without its first bit.
+  return toyHash(concatOctets(clearTopBit(leftHash), rightHash));
+}
+
+function toyValue(key) {
+  return textOctets(`v${key}`);
+}
+
 function requireBits(bits, maxLength, what) {
   if (!/^[01]*$/.test(bits)) throw new InputError(`${what} "${bits}" is not a bit string`);
-  if (bits.length > maxLength) throw new InputError(`${what} ${bits} is longer than ${maxLength} bits`);
+  if (bits.length > maxLength) throw new InputError(`${what} ${bits || "(empty)"} is longer than ${maxLength} bits`);
 }
 
 function parseKeys(text) {
   const typedKeys = splitList(text);
   typedKeys.forEach((typed) => requireBits(typed, MAX_WIDTH, "Key"));
   const width = Math.max(MIN_WIDTH, ...typedKeys.map((typed) => typed.length));
-  const entries = typedKeys.map((typed) => ({ typed, key: typed.padEnd(width, "0") }));
+  const typedEntries = typedKeys.map((typed) => ({ typed, key: typed.padEnd(width, "0") }));
   const typedByKey = new Map();
-  for (const { typed, key } of entries) {
+  for (const { typed, key } of typedEntries) {
     if (typedByKey.has(key)) throw new InputError(`${typedByKey.get(key)} and ${typed} are the same key once padded: ${key}`);
     typedByKey.set(key, typed);
   }
-  entries.sort((first, second) => (first.key < second.key ? -1 : 1));
-  return { width, entries };
+  typedEntries.sort((first, second) => (first.key < second.key ? -1 : 1));
+  return { width, typedEntries };
 }
 
 function parseRange(text, width) {
@@ -361,6 +488,10 @@ function parseRange(text, width) {
   if (bounds.length !== 2) throw new InputError(`Range "${text}" is not of the form start-end`);
   bounds.forEach((bound) => requireBits(bound, width, "Range bound"));
   return { text, start: bounds[0].padEnd(width, "0"), end: bounds[1].padEnd(width, "1") };
+}
+
+function isInRange(key, range) {
+  return range.start <= key && key <= range.end;
 }
 
 function validateQuery({ listedKeys, ranges }) {
@@ -371,20 +502,19 @@ function validateQuery({ listedKeys, ranges }) {
     if (range.start > range.end) throw new InputError(`Range ${range.text}: start ${range.start} exceeds end ${range.end}`);
     const previous = ranges[index - 1];
     if (previous && range.start <= previous.end) {
-      throw new InputError(`Range ${range.text} must start after the previous range's end ${previous.end}`);
+      throw new InputError(`Range ${range.text}: start ${range.start} does not exceed the previous range's end ${previous.end}`);
     }
     const keyInside = listedKeys.find((key) => isInRange(key, range));
     if (keyInside) throw new InputError(`Listed key ${keyInside} lies within range ${range.text}`);
   });
 }
 
-function parseQuery({ keysText, rangesText, known }, width) {
+function parseQuery({ keysText, rangesText }, width) {
   const typedKeys = splitList(keysText);
   typedKeys.forEach((typed) => requireBits(typed, width, "Listed key"));
   const query = {
     listedKeys: typedKeys.map((typed) => typed.padEnd(width, "0")),
     ranges: splitList(rangesText).map((text) => parseRange(text, width)),
-    known,
   };
   validateQuery(query);
   return query;
@@ -393,29 +523,25 @@ function parseQuery({ keysText, rangesText, known }, width) {
 function parseSizeLimit(text) {
   if (text.trim() === "") return null;
   const limit = Number(text);
-  if (!Number.isInteger(limit) || limit < 1) throw new InputError(`Size limit "${text}" is not a positive whole number`);
+  if (!Number.isInteger(limit) || limit < 0) throw new InputError(`Size limit "${text}" is not a whole number of octets`);
   return limit;
 }
 
-function buildTrie(keys, path = "") {
-  if (keys.length === 0) return { type: "empty", path };
-  // A subtree with one key is a leaf at whatever depth that happens: M() has no path compression.
-  if (keys.length === 1) return { type: "leaf", path, key: keys[0], value: `v${keys[0]}` };
+function buildTrie(entries, path = "") {
+  if (entries.length === 0) return { type: "empty", path, keys: [], hash: ZERO_HASH };
+  // One key is a leaf at whatever depth that happens: M() has no path compression.
+  if (entries.length === 1) {
+    const [{ key, value }] = entries;
+    return { type: "leaf", path, keys: [key], key, value, hash: leafHash(key, valueForm(value)) };
+  }
   const depth = path.length;
-  return {
-    type: "branch",
-    path,
-    left: buildTrie(keys.filter((key) => key[depth] === "0"), `${path}0`),
-    right: buildTrie(keys.filter((key) => key[depth] === "1"), `${path}1`),
-  };
+  const left = buildTrie(entries.filter((entry) => entry.key[depth] === "0"), `${path}0`);
+  const right = buildTrie(entries.filter((entry) => entry.key[depth] === "1"), `${path}1`);
+  return { type: "branch", path, keys: [...left.keys, ...right.keys], left, right, hash: branchHash(left.hash, right.hash) };
 }
 
 function trieNodes(node) {
   return node.type === "branch" ? [node, ...trieNodes(node.left), ...trieNodes(node.right)] : [node];
-}
-
-function walkTrie(node, key) {
-  return node.type === "branch" ? walkTrie(key[node.path.length] === "0" ? node.left : node.right, key) : node;
 }
 
 function nodeLabel(node) {
@@ -424,185 +550,350 @@ function nodeLabel(node) {
   return node.path === "" ? "root" : `N${node.path}`;
 }
 
-function isInRange(key, range) {
-  return range.start <= key && key <= range.end;
+function hashLabels(trie) {
+  const labels = new Map();
+  for (const node of trieNodes(trie)) {
+    labels.set(toHex(node.hash), nodeLabel(node));
+    labels.set(toHex(clearTopBit(node.hash)), nodeLabel(node));
+  }
+  return labels;
+}
+
+function makeState({ width, typedEntries }) {
+  const entries = typedEntries.map(({ key }) => ({ key, value: toyValue(key) }));
+  const trie = buildTrie(entries);
+  return { width, typedEntries, entries, trie, stateRoot: trie.hash, labels: hashLabels(trie) };
+}
+
+function rangeMeetsPath(range, path, width) {
+  return path.padEnd(width, "0") <= range.end && path.padEnd(width, "1") >= range.start;
+}
+
+function queryReachesPath(query, path, width) {
+  return query.listedKeys.some((key) => key.startsWith(path)) || query.ranges.some((range) => rangeMeetsPath(range, path, width));
 }
 
 function isRequestedKey(key, query) {
   return query.listedKeys.includes(key) || query.ranges.some((range) => isInRange(key, range));
 }
 
-function prefixMeetsRange(path, range, width) {
-  return path.padEnd(width, "0") <= range.end && path.padEnd(width, "1") >= range.start;
+function entriesOfQuery(stateEntries, query) {
+  return stateEntries.filter((entry) => isRequestedKey(entry.key, query));
 }
 
-function isExpanded(path, query, width) {
-  return query.listedKeys.some((key) => key.startsWith(path)) || query.ranges.some((range) => prefixMeetsRange(path, range, width));
-}
-
-function chooseLeafKind(leaf, request) {
-  const isRequested = isRequestedKey(leaf.key, request);
-  // The verifier finds an elided leaf by the one known key under its path; a second listed key there makes that ambiguous.
-  const sharesPathWithListedKey = request.listedKeys.some((key) => key !== leaf.key && key.startsWith(leaf.path));
-  if (isRequested && !sharesPathWithListedKey) return KIND_FOR_KNOWN_MODE[request.known];
-  if (!isRequested && leaf.value.length > EMBEDDED_LIMIT) return "ValueHash";
-  return "Full";
-}
-
-function expandForQuery(trie, query, width, request = query) {
-  function visit(node) {
-    if (node.type === "empty") return { tag: "E", node };
-    if (!isExpanded(node.path, query, width)) return { tag: "H", node };
-    if (node.type === "leaf") return { tag: "L", node, leafKind: chooseLeafKind(node, request) };
-    return { tag: "B", node, left: visit(node.left), right: visit(node.right) };
+function tagSubtree(node, query, entryKeys, width) {
+  if (node.keys.length === 0) return { tag: "K", node };
+  if (node.keys.every((key) => entryKeys.has(key))) return { tag: "K", node };
+  if (queryReachesPath(query, node.path, width)) {
+    if (node.type === "leaf") return { tag: "R", node };
+    return { tag: "B", node, left: tagSubtree(node.left, query, entryKeys, width), right: tagSubtree(node.right, query, entryKeys, width) };
   }
-  return visit(trie);
+  return { tag: "H", node };
 }
 
 function preOrder(proofNode) {
   return proofNode.tag === "B" ? [proofNode, ...preOrder(proofNode.left), ...preOrder(proofNode.right)] : [proofNode];
 }
 
-function valueForm(value) {
-  return value.length <= EMBEDDED_LIMIT ? value.length : 33;
-}
-
-function kindOctet(leafKind, value) {
-  if (leafKind === "FullyElided") return 0x80;
-  if (leafKind === "ValueHash") return 34;
-  return (leafKind === "KeyElided" ? 0x40 : 0) | valueForm(value);
-}
-
-function shipsKeySuffix(leafKind) {
-  return leafKind === "Full" || leafKind === "ValueHash";
-}
-
-function shipsValue(leafKind) {
-  return leafKind === "Full" || leafKind === "KeyElided";
-}
-
-function hashEntries(proofNode) {
-  if (proofNode.tag === "H") return [`h(${nodeLabel(proofNode.node)})`];
-  if (proofNode.leafKind === "ValueHash") return [`h(${proofNode.node.value})`];
-  return [];
-}
-
-function packTags(tags) {
-  const bits = tags.map((tag) => TAG_CODES[tag]).join("");
-  const paddedBits = bits.padEnd(Math.ceil(bits.length / 8) * 8, "0");
-  return paddedBits.match(/.{8}/g).map((octet) => parseInt(octet, 2).toString(16).padStart(2, "0")).join("");
-}
-
-function encodeProof(proofTree) {
-  const nodes = preOrder(proofTree);
-  const leaves = nodes.filter((proofNode) => proofNode.tag === "L").map(({ node, leafKind }) => ({
-    key: node.key,
-    depth: node.path.length,
-    leafKind,
-    octet: kindOctet(leafKind, node.value),
-    suffix: shipsKeySuffix(leafKind) ? node.key.slice(node.path.length) : null,
-    value: shipsValue(leafKind) ? node.value : null,
-  }));
-  const tags = nodes.map((proofNode) => proofNode.tag);
-  return { tags, packedTags: packTags(tags), leaves, hashes: nodes.flatMap(hashEntries) };
-}
-
-function lookupInProof(proofTree, key) {
+function proofEndFor(proofTree, key) {
   let current = proofTree;
   while (current.tag === "B") current = key[current.node.path.length] === "0" ? current.left : current.right;
   return current;
 }
 
-function verdictFor(key, proofTree) {
-  const end = lookupInProof(proofTree, key);
-  if (end.tag === "H") return { key, outcome: "Not covered", detail: `path leaves the proof at h(${nodeLabel(end.node)})` };
-  if (end.tag === "E") return { key, outcome: "Absent", detail: `path ends at E under ${end.node.path || "the root"}` };
-  if (end.node.key === key) return { key, outcome: "Present", detail: `leaf at depth ${end.node.path.length}` };
-  return { key, outcome: "Absent", detail: `path ends at the leaf holding ${end.node.key}` };
+function encodeProof(proofTree) {
+  const proofNodes = preOrder(proofTree);
+  const tags = proofNodes.map((proofNode) => proofNode.tag);
+  const tagBits = tags.map((tag) => TAG_CODES[tag]).join("");
+  const hashes = proofNodes.filter((proofNode) => proofNode.tag === "H").map(({ node }) => ({
+    path: node.path,
+    isLeft: isLeftChild(node.path),
+    hash: isLeftChild(node.path) ? clearTopBit(node.hash) : node.hash,
+  }));
+  const rawLeaves = proofNodes.filter((proofNode) => proofNode.tag === "R").map(({ node }) => ({
+    path: node.path,
+    key: node.key,
+    suffix: node.key.slice(node.path.length),
+    ...valueForm(node.value),
+  }));
+  const rawKeyBits = rawLeaves.map((leaf) => leaf.suffix).join("");
+  const sections = {
+    version: Uint8Array.of(PROOF_VERSION),
+    tags: bitsToOctets(tagBits),
+    hashes: concatOctets(...hashes.map(({ hash }) => hash)),
+    rawKeys: bitsToOctets(rawKeyBits),
+    rawValues: concatOctets(...rawLeaves.map(({ form, data }) => concatOctets(Uint8Array.of(form), data))),
+  };
+  return { tags, tagBits, hashes, rawLeaves, rawKeyBits, sections, octets: concatOctets(...Object.values(sections)) };
 }
 
-function rangeCoverage(range, encoded) {
-  return { range, coveredKeys: encoded.leaves.map((leaf) => leaf.key).filter((key) => isInRange(key, range)) };
+function readTags(octets, width) {
+  const bits = octetsToBits(octets.subarray(1));
+  const tagNodes = [];
+  const openPaths = [""];
+  let bitIndex = 0;
+  while (openPaths.length > 0) {
+    if (bitIndex + 2 > bits.length) {
+      throw new ProofRejection(1, `the tags end after ${tagNodes.length} tags with ${openPaths.length} subtrees still open`);
+    }
+    const tag = TAG_BY_CODE[bits.slice(bitIndex, bitIndex + 2)];
+    const path = openPaths.pop();
+    bitIndex += 2;
+    if (tag === "B") {
+      if (path.length >= width) throw new ProofRejection(3, `the B at path ${path} is at depth ${path.length}`);
+      openPaths.push(`${path}1`, `${path}0`);
+    }
+    tagNodes.push({ tag, path });
+  }
+  const tagOctets = Math.ceil(bitIndex / 8);
+  if (bits.slice(bitIndex, tagOctets * 8).includes("1")) throw new ProofRejection(2, "a padding bit of the tags section is set");
+  return { tagNodes, tagOctets };
 }
 
-function estimateBytes(encoded, request, width) {
-  const keyBits = sum(encoded.leaves.map((leaf) => leaf.suffix?.length ?? 0));
-  const parts = [
+function readSections(octets, width) {
+  const { tagNodes, tagOctets } = readTags(octets, width);
+  let offset = 1 + tagOctets;
+  const take = (length, section) => {
+    if (offset + length > octets.length) throw new ProofRejection(10, `the ${section} section is shorter than its contents require`);
+    offset += length;
+    return octets.subarray(offset - length, offset);
+  };
+  const hashes = tagNodes.filter(({ tag }) => tag === "H").map(() => take(HASH_SIZE, "hashes"));
+  const rawPaths = tagNodes.filter(({ tag }) => tag === "R").map(({ path }) => path);
+  const suffixBitCount = sum(rawPaths.map((path) => width - path.length));
+  const rawKeyBits = octetsToBits(take(Math.ceil(suffixBitCount / 8), "raw_keys"));
+  if (rawKeyBits.slice(suffixBitCount).includes("1")) throw new ProofRejection(7, "a padding bit of the raw_keys section is set");
+  let suffixStart = 0;
+  const rawLeaves = rawPaths.map((path) => {
+    const suffix = rawKeyBits.slice(suffixStart, suffixStart + width - path.length);
+    suffixStart += suffix.length;
+    const [form] = take(1, "raw_values");
+    if (form > VALUE_HASH_FORM) throw new ProofRejection(8, `the R at path ${path} has form octet ${form}`);
+    const data = take(form === VALUE_HASH_FORM ? HASH_SIZE : form, "raw_values");
+    return { path, suffix, key: path + suffix, form, data };
+  });
+  if (offset < octets.length) throw new ProofRejection(10, `${octets.length - offset} octets remain after the last section`);
+  return { tagNodes, hashes, rawLeaves };
+}
+
+function forbiddenChildren(left, right) {
+  const tags = [left.tag, right.tag].sort().join("");
+  if (tags === "HH") return "two H";
+  if (tags === "KK") return "two K";
+  const emptyKnown = [left, right].some((child) => child.tag === "K" && child.entries.length === 0);
+  if (tags === "KR" && emptyKnown) return "an empty K and an R";
+  return null;
+}
+
+function walkProof({ tagNodes, hashes, rawLeaves }, stateRoot, entries) {
+  const violations = [];
+  const entryKeys = new Set(entries.map((entry) => entry.key));
+  const consumed = new Set();
+  const known = [];
+  const hashed = [];
+  const raw = [];
+  const stack = [];
+  let rootHash = null;
+  let hashIndex = 0;
+  let rawIndex = 0;
+  for (const { tag, path } of tagNodes) {
+    if (tag === "B") {
+      stack.push(null);
+      continue;
+    }
+    let completed = { tag, path };
+    if (tag === "H") {
+      completed.hash = hashes[hashIndex++];
+      if (isZeroHash(completed.hash)) violations.push({ rule: 5, message: `the H at path ${path || "(root)"} carries the zero hash` });
+      if (isLeftChild(path) && completed.hash[0] & 0x80) violations.push({ rule: 6, message: `the H at path ${path} is a left child with bit 7 set` });
+      hashed.push(completed);
+    } else if (tag === "K") {
+      completed.entries = entries.filter((entry) => entry.key.startsWith(path) && !consumed.has(entry.key));
+      completed.entries.forEach((entry) => consumed.add(entry.key));
+      completed.hash = buildTrie(completed.entries, path).hash;
+      known.push(completed);
+    } else {
+      completed = { ...completed, ...rawLeaves[rawIndex++] };
+      if (entryKeys.has(completed.key)) violations.push({ rule: 9, message: `the R at path ${path} holds ${completed.key}, the key of an entry` });
+      completed.hash = leafHash(completed.key, completed);
+      raw.push(completed);
+    }
+    while (rootHash === null) {
+      if (stack.length === 0) {
+        rootHash = completed.hash;
+      } else if (stack.at(-1) === null) {
+        stack[stack.length - 1] = completed;
+        break;
+      } else {
+        const left = stack.pop();
+        const problem = forbiddenChildren(left, completed);
+        const branchPath = left.path.slice(0, -1);
+        if (problem) violations.push({ rule: 4, message: `the B at path ${branchPath || "(root)"} has ${problem} as children` });
+        completed = { tag: "B", path: branchPath, hash: branchHash(left.hash, completed.hash) };
+      }
+    }
+  }
+  const unconsumed = entries.filter((entry) => !consumed.has(entry.key));
+  if (unconsumed.length > 0) violations.push({ rule: 12, message: `entries under no K: ${unconsumed.map((entry) => entry.key).join(", ")}` });
+  if (!sameOctets(rootHash, stateRoot)) violations.push({ rule: 13, message: "the root hash differs from the trusted state root" });
+  return { violations, rootHash, known, hashed, raw };
+}
+
+function entryOrderViolations(entries) {
+  return entries.slice(1).flatMap((entry, index) => (entries[index].key >= entry.key
+    ? [{ rule: 11, message: `entry ${entry.key} follows ${entries[index].key}` }]
+    : []));
+}
+
+function verifyProof(octets, stateRoot, entries, width) {
+  const rejected = (violations) => ({ status: "invalid", violations, walked: false, known: [], hashed: [], raw: [], present: new Map(), covered: [] });
+  if (octets.length === 0) return rejected([{ rule: 1, message: "the proof is empty" }]);
+  if (octets[0] !== PROOF_VERSION) return { ...rejected([]), status: "unknown version" };
+  let sections;
+  try {
+    sections = readSections(octets, width);
+  } catch (error) {
+    if (!(error instanceof ProofRejection)) throw error;
+    return rejected([{ rule: error.rule, message: error.message }]);
+  }
+  const walk = walkProof(sections, stateRoot, entries);
+  const violations = [...entryOrderViolations(entries), ...walk.violations].sort((first, second) => first.rule - second.rule);
+  const present = new Map();
+  for (const known of walk.known) for (const entry of known.entries) present.set(entry.key, { source: "entry", form: valueForm(entry.value).form, data: entry.value });
+  for (const leaf of walk.raw) present.set(leaf.key, { source: "R", form: leaf.form, data: leaf.data });
+  const covered = [...walk.known, ...walk.raw].sort((first, second) => (first.path < second.path ? -1 : 1));
+  return { ...walk, status: violations.length === 0 ? "valid" : "invalid", violations, walked: true, present, covered };
+}
+
+function checkCanonical(verification) {
+  return CANONICAL_RULES.map((text, index) => {
+    const failure = verification.violations.find((violation) => violation.rule === index + 1);
+    return { rule: index + 1, text, checked: verification.walked || Boolean(failure), failure: failure?.message ?? null };
+  });
+}
+
+function describeCoveringNode(covering) {
+  if (covering.tag === "R") return `its path ends at the R at ${covering.path || "the root"}, which holds ${covering.key}`;
+  const what = covering.entries.length === 0 ? "the empty K" : "the K";
+  return `its path ends at ${what} at ${covering.path || "the root"}`;
+}
+
+function verdictFor(key, verification) {
+  const presence = verification.present.get(key);
+  if (presence) return { key, outcome: "present", detail: presence.source === "entry" ? `entry, value ${octetsText(presence.data)}` : "held by an R, not delivered as an entry" };
+  const covering = verification.covered.find((node) => key.startsWith(node.path));
+  if (covering) return { key, outcome: "absent", detail: describeCoveringNode(covering) };
+  const hidden = verification.hashed.find((node) => key.startsWith(node.path));
+  return { key, outcome: "not covered", detail: hidden ? `its path leaves the proof subtree through the H at ${hidden.path || "the root"}` : "the proof was rejected" };
+}
+
+function rangeContents(range, verification) {
+  return [...verification.present].filter(([key, { source }]) => source === "entry" && isInRange(key, range)).map(([key]) => key);
+}
+
+function checkCoverage(verification, query, width) {
+  const listedUnderH = verification.hashed.flatMap((node) => query.listedKeys.filter((key) => key.startsWith(node.path)).map((key) => `${key} under the H at ${node.path || "the root"}`));
+  const rangeUnderH = verification.hashed.flatMap((node) => query.ranges.filter((range) => rangeMeetsPath(range, node.path, width)).map((range) => `range ${range.text} meets the H at ${node.path || "the root"}`));
+  const requestedInR = verification.raw.filter((leaf) => isRequestedKey(leaf.key, query)).map((leaf) => `the R at ${leaf.path} holds requested key ${leaf.key}`);
+  return [
+    { text: "no H stands for a node under which a listed key lies", problems: listedUnderH },
+    { text: "no H stands for a node under which a key within a range lies", problems: rangeUnderH },
+    { text: "no R holds a listed key or a key within a range", problems: requestedInR },
+  ];
+}
+
+function keyOctetCount(width) {
+  return Math.ceil(width / 8);
+}
+
+function estimateSizes(encoded, entries, query, trie, width) {
+  const suffixBits = encoded.rawKeyBits.length;
+  const proofParts = [
     ["version", 1],
     [`tags: ⌈2·${encoded.tags.length}/8⌉`, Math.ceil((2 * encoded.tags.length) / 8)],
-    [`kinds: ${encoded.leaves.length} × 1`, encoded.leaves.length],
     [`hashes: ${encoded.hashes.length} × ${HASH_SIZE}`, HASH_SIZE * encoded.hashes.length],
-    [`keys: ⌈${keyBits}/8⌉`, Math.ceil(keyBits / 8)],
-    ["values", sum(encoded.leaves.map((leaf) => leaf.value?.length ?? 0))],
+    [`raw keys: ⌈${suffixBits}/8⌉`, Math.ceil(suffixBits / 8)],
+    [`raw values: ${encoded.rawLeaves.length} × form octet + data`, sum(encoded.rawLeaves.map((leaf) => 1 + leaf.data.length))],
   ];
-  const pathNodeCount = encoded.tags.filter((tag) => tag === "B" || tag === "L").length;
-  const returnedPairs = encoded.leaves.filter((leaf) => isRequestedKey(leaf.key, request));
-  const pairBytes = sum(returnedPairs.map((leaf) => Math.ceil(width / 8) + `v${leaf.key}`.length));
+  const entryParts = entries.map((entry) => [`${entry.key}: ⌈${width}/8⌉ + ${entry.value.length}`, keyOctetCount(width) + entry.value.length]);
+  const entriesTotal = sum(entryParts.map(([, size]) => size));
+  const pathNodeCount = trieNodes(trie).filter((node) => node.type !== "empty" && queryReachesPath(query, node.path, width)).length;
   return {
-    parts,
-    compactTotal: sum(parts.map(([, bytes]) => bytes)),
+    proofParts,
+    proofTotal: sum(proofParts.map(([, size]) => size)),
+    encodedLength: encoded.octets.length,
+    entryParts,
+    entriesTotal,
     oldParts: [
       [`${pathNodeCount} nodes on the paths × ${OLD_NODE_SIZE}`, OLD_NODE_SIZE * pathNodeCount],
-      [`${returnedPairs.length} pairs × (⌈${width}/8⌉ + value)`, pairBytes],
+      [`${entries.length} pairs, as above`, entriesTotal],
     ],
-    oldTotal: OLD_NODE_SIZE * pathNodeCount + pairBytes,
+    oldTotal: OLD_NODE_SIZE * pathNodeCount + entriesTotal,
   };
 }
 
-function chargedKeys(stateKeys, request) {
-  const rangeKeys = stateKeys.filter((key) => request.ranges.some((range) => isInRange(key, range)));
-  return [...request.listedKeys, ...rangeKeys].sort();
+function chargedKeys(stateEntries, query) {
+  const rangeKeys = stateEntries.map((entry) => entry.key).filter((key) => query.ranges.some((range) => isInRange(key, range)));
+  return [...query.listedKeys, ...rangeKeys].sort();
 }
 
-function chargeFor(key, trie, request, width) {
-  const end = walkTrie(trie, key);
-  if (end.type !== "leaf") return 0;
-  const leafKind = chooseLeafKind(end, request);
-  const suffixBytes = shipsKeySuffix(leafKind) ? Math.ceil((width - end.path.length) / 8) : 0;
-  const valueBytes = leafKind === "ValueHash" ? HASH_SIZE : shipsValue(leafKind) ? end.value.length : 0;
-  return 1 + suffixBytes + valueBytes;
+function chargeFor(key, state, proofTree) {
+  const entry = state.entries.find((candidate) => candidate.key === key);
+  if (entry) return { charge: keyOctetCount(state.width) + entry.value.length, reason: "present" };
+  const end = proofEndFor(proofTree, key);
+  if (end.tag !== "R") return { charge: 0, reason: `absent, ends at a ${end.tag}` };
+  const depth = end.node.path.length;
+  const valueCharge = Math.min(end.node.value.length, HASH_SIZE);
+  return { charge: Math.ceil((state.width - depth) / 8) + 1 + valueCharge, reason: `absent, ends at the R holding ${end.node.key}` };
 }
 
-function cutQueryAt(query, lastKey) {
+function cutQueryAt(query, cutKey) {
   return {
-    ...query,
-    listedKeys: query.listedKeys.filter((key) => key <= lastKey),
+    listedKeys: query.listedKeys.filter((key) => key <= cutKey),
     ranges: query.ranges
-      .filter((range) => range.start <= lastKey)
-      .map((range) => ({ ...range, end: range.end < lastKey ? range.end : lastKey })),
+      .filter((range) => range.start <= cutKey)
+      .map((range) => ({ ...range, end: range.end > cutKey ? cutKey : range.end })),
   };
 }
 
-function truncateQuery(trie, stateKeys, request, width, sizeLimit) {
+function cutBySizeLimit(state, query, sizeLimit) {
+  const fullEntryKeys = new Set(entriesOfQuery(state.entries, query).map((entry) => entry.key));
+  const fullProofTree = tagSubtree(state.trie, query, fullEntryKeys, state.width);
   const charges = [];
   let total = 0;
-  for (const key of chargedKeys(stateKeys, request)) {
-    const charge = chargeFor(key, trie, request, width);
+  for (const key of chargedKeys(state.entries, query)) {
+    const { charge, reason } = chargeFor(key, state, fullProofTree);
     const fits = charges.length === 0 || total + charge <= sizeLimit;
-    charges.push({ key, charge, included: fits });
+    charges.push({ key, charge, reason, included: fits });
     if (!fits) break;
     total += charge;
   }
-  const included = charges.filter((entry) => entry.included);
+  const included = charges.filter((charged) => charged.included);
   const complete = included.length === charges.length;
-  const provenThrough = complete ? null : included.at(-1).key;
-  return { charges, total, complete, provenThrough, cutQuery: complete ? request : cutQueryAt(request, provenThrough) };
+  const cutKey = complete ? null : included.at(-1).key;
+  return { charges, total, complete, cutKey, query: complete ? query : cutQueryAt(query, cutKey) };
 }
 
-function proveQuery(state, request, sizeLimit) {
-  const truncation = sizeLimit === null ? null : truncateQuery(state.trie, state.stateKeys, request, state.width, sizeLimit);
-  const provedQuery = truncation?.cutQuery ?? request;
-  const proofTree = expandForQuery(state.trie, provedQuery, state.width, request);
+function proveQuery(state, query, sizeLimit) {
+  const cut = sizeLimit === null ? null : cutBySizeLimit(state, query, sizeLimit);
+  const provedQuery = cut?.query ?? query;
+  const entries = entriesOfQuery(state.entries, provedQuery);
+  const proofTree = tagSubtree(state.trie, provedQuery, new Set(entries.map((entry) => entry.key)), state.width);
   const encoded = encodeProof(proofTree);
+  const verification = verifyProof(encoded.octets, state.stateRoot, entries, state.width);
   return {
-    request,
+    query,
     provedQuery,
-    truncation,
+    cut,
+    entries,
     proofTree,
     encoded,
-    verdicts: provedQuery.listedKeys.map((key) => verdictFor(key, proofTree)),
-    coverage: provedQuery.ranges.map((range) => rangeCoverage(range, encoded)),
-    bytes: estimateBytes(encoded, request, state.width),
+    verification,
+    canonical: checkCanonical(verification),
+    coverage: checkCoverage(verification, provedQuery, state.width),
+    verdicts: provedQuery.listedKeys.map((key) => verdictFor(key, verification)),
+    rangeEntries: provedQuery.ranges.map((range) => ({ range, keys: rangeContents(range, verification) })),
+    sizes: estimateSizes(encoded, entries, provedQuery, state.trie, state.width),
   };
 }
 
@@ -621,23 +912,6 @@ function diffTries(previous, current) {
       .filter(([key, depth]) => before.has(key) && before.get(key) !== depth)
       .map(([key, depth]) => `${key} ${before.get(key)} → ${depth}`),
   };
-}
-
-function makeState(parsedKeys) {
-  const stateKeys = parsedKeys.entries.map((entry) => entry.key);
-  return { ...parsedKeys, stateKeys, trie: buildTrie(stateKeys) };
-}
-
-function describeProofForTree(proofTree, query) {
-  const tagByPath = new Map(preOrder(proofTree).map((proofNode) => [proofNode.node.path, proofNode.tag]));
-  const endingKeys = new Map();
-  const pathEdges = new Set();
-  for (const key of query.listedKeys) {
-    const endPath = lookupInProof(proofTree, key).node.path;
-    for (let depth = 1; depth <= endPath.length; depth++) pathEdges.add(endPath.slice(0, depth));
-    endingKeys.set(endPath, [...(endingKeys.get(endPath) ?? []), key]);
-  }
-  return { tagByPath, endingKeys, pathEdges };
 }
 
 const LEVEL_GAP = 66;
@@ -680,6 +954,18 @@ function layoutTree(trie, width) {
   };
 }
 
+function describeProofForTree(proofTree, query) {
+  const tagByPath = new Map(preOrder(proofTree).map((proofNode) => [proofNode.node.path, proofNode.tag]));
+  const endingKeys = new Map();
+  const pathEdges = new Set();
+  for (const key of query.listedKeys) {
+    const endPath = proofEndFor(proofTree, key).node.path;
+    for (let depth = 1; depth <= endPath.length; depth++) pathEdges.add(endPath.slice(0, depth));
+    endingKeys.set(endPath, [...(endingKeys.get(endPath) ?? []), key]);
+  }
+  return { tagByPath, endingKeys, pathEdges };
+}
+
 function nodeHalfHeight(node) {
   if (node.type === "leaf") return CARD_HEIGHT / 2;
   return node.type === "empty" ? EMPTY_RADIUS : BRANCH_RADIUS;
@@ -704,16 +990,18 @@ function renderEdge({ node, parent, x, y }, proofView) {
 
 function renderShape(node, x, y, cardWidth, tag) {
   if (node.type === "empty") {
-    return `<circle class="shape" cx="${x}" cy="${y}" r="${EMPTY_RADIUS}"/><text x="${x}" y="${y + 4}">∅</text>`;
+    const letter = tag ? `<text class="tag-letter" x="${x + EMPTY_RADIUS + 8}" y="${y + 4}">${tag}</text>` : "";
+    return `<circle class="shape" cx="${x}" cy="${y}" r="${EMPTY_RADIUS}"/><text x="${x}" y="${y + 4}">∅</text>${letter}`;
   }
   if (node.type === "leaf") {
+    const letter = tag ? `<text class="tag-letter" x="${x + cardWidth / 2 - 2}" y="${y - CARD_HEIGHT / 2 - 4}" text-anchor="end">${tag}</text>` : "";
     return `<title>leaf ${node.key} at depth ${node.path.length}</title>` +
       `<rect class="shape" x="${x - cardWidth / 2}" y="${y - CARD_HEIGHT / 2}" width="${cardWidth}" height="${CARD_HEIGHT}" rx="5"/>` +
-      `<text class="leaf-key" x="${x}" y="${y + 4}">${node.key}</text>`;
+      `<text class="leaf-key" x="${x}" y="${y + 4}">${node.key}</text>${letter}`;
   }
-  const label = tag === "H" ? `h(${nodeLabel(node)})` : nodeLabel(node);
+  const name = tag === "H" ? `h(${nodeLabel(node)})` : nodeLabel(node);
   return `<circle class="shape" cx="${x}" cy="${y}" r="${BRANCH_RADIUS}"/>` +
-    `<text class="node-label" x="${x + BRANCH_RADIUS + 4}" y="${y - BRANCH_RADIUS + 2}">${label}</text>`;
+    `<text class="node-label" x="${x + BRANCH_RADIUS + 4}" y="${y - BRANCH_RADIUS + 2}">${tag ? `${tag} ` : ""}${name}</text>`;
 }
 
 function renderEndMark(node, x, y, cardWidth, keys) {
@@ -737,8 +1025,8 @@ function renderTree(layout, proofView, caption) {
   return `<svg class="trie" width="${layout.width}" height="${layout.height}" viewBox="0 0 ${layout.width} ${layout.height}" role="img" aria-label="${caption}">${edges}${nodes}</svg>`;
 }
 
-function card(title, body, wide = false) {
-  return `<article class="card${wide ? " wide" : ""}"><h3>${title}</h3>${body}</article>`;
+function card(title, body, { wide = false, failed = false } = {}) {
+  return `<article class="card${wide ? " wide" : ""}${failed ? " failed" : ""}"><h3>${title}</h3>${body}</article>`;
 }
 
 function table(headers, rows) {
@@ -748,89 +1036,179 @@ function table(headers, rows) {
   return `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
 }
 
-const KIND_DESCRIPTIONS = {
-  Full: "Full: key suffix and value shipped",
-  ValueHash: "ValueHash: key suffix and the value's hash shipped",
-  KeyElided: "KeyElided: value shipped, key from the caller",
-  FullyElided: "FullyElided: key and value from the caller",
-};
+function hashName(hash, labels) {
+  const label = labels.get(toHex(hash));
+  return label ? `h(${label})` : `${toHex(hash).slice(0, 8)}…`;
+}
 
-function renderTagsCard({ tags, packedTags }) {
+function shortHex(octets) {
+  return octets.length > 4 ? `${toHex(octets.subarray(0, 4))}…` : toHex(octets);
+}
+
+function pathName(path) {
+  return path || "(root)";
+}
+
+function passFail(ok, text = ok ? "pass" : "fail") {
+  return `<span class="${ok ? "pass" : "fail"}">${text}</span>`;
+}
+
+function describeValue({ form, data }) {
+  return form === VALUE_HASH_FORM ? `hash ${shortHex(data)}` : octetsText(data);
+}
+
+function renderEntriesCard(entries, width) {
+  const rows = entries.map((entry) => [entry.key, octetsText(entry.value), String(keyOctetCount(width) + entry.value.length)]);
+  return card("entries, delivered beside the proof",
+    table(["key", "value", "octets"], rows) +
+    `<p class="hint">The state pairs the query asks for, ascending by key. The proof never carries them; the verifier rebuilds every K from them.</p>`);
+}
+
+function renderTagsCard({ tags, tagBits, sections }) {
   const cells = tags.map((tag) => `<span class="tag-cell tag-${tag}"><b>${tag}</b><small>${TAG_CODES[tag]}</small></span>`).join("");
-  const paddingBits = packedTags.length * 4 - 2 * tags.length;
-  return card("tags", `<div class="tag-stream">${cells}</div>` +
-    `<p class="hint">Packed as <code>${packedTags}</code>: ${tags.length} tags and ${paddingBits} padding bits.</p>`, true);
+  const paddingBits = sections.tags.length * 8 - tagBits.length;
+  return card("version and tags",
+    `<p class="mono">version <code>${toHex(sections.version)}</code></p>` +
+    `<div class="tag-stream">${cells}</div>` +
+    `<p class="hint">Pre-order, packed from the most significant bit: <code>${toHex(sections.tags)}</code> = ${tags.length} ${tags.length === 1 ? "tag" : "tags"} and ${paddingBits} padding bits.</p>`,
+    { wide: true });
 }
 
-function renderKindsCard({ leaves }) {
-  const rows = leaves.map((leaf) => [leaf.key, KIND_DESCRIPTIONS[leaf.leafKind], `0x${leaf.octet.toString(16).padStart(2, "0")}`]);
-  return card("kinds", table(["leaf", "kind", "octet"], rows));
+function renderHashesCard({ hashes }, labels) {
+  const items = hashes.map(({ path, isLeft, hash }) =>
+    `<li>${hashName(hash, labels)} <span class="hint">at ${pathName(path)}${isLeft ? ", left child: bit 7 cleared" : ""}, ${shortHex(hash)}</span></li>`);
+  return card("hashes", items.length === 0 ? `<p class="hint">None.</p>` : `<ol class="hash-list">${items.join("")}</ol>`);
 }
 
-function renderHashesCard({ hashes }) {
-  const body = hashes.length === 0 ? `<p class="hint">None.</p>` : `<ol class="hash-list">${hashes.map((hash) => `<li>${hash}</li>`).join("")}</ol>`;
-  return card("hashes", body);
+function renderRawKeysCard({ rawLeaves, rawKeyBits, sections }, width) {
+  const rows = rawLeaves.map((leaf) => [pathName(leaf.path), String(leaf.path.length), `${leaf.suffix || "(none)"}, ${width - leaf.path.length} bits`]);
+  const packing = rawLeaves.length === 0 ? "" :
+    `<p class="hint">Concatenated: <code>${rawKeyBits || "(no bits)"}</code>, padded at the end only: <code>${toHex(sections.rawKeys) || "(empty)"}</code>.</p>`;
+  return card("raw keys", table(["R at path", "depth d", `suffix, W − d bits`], rows) + packing);
 }
 
-function renderKeysCard({ leaves }, width) {
-  const rows = leaves.map((leaf) => [
-    leaf.key,
-    String(leaf.depth),
-    leaf.suffix === null ? "from caller" : `${leaf.suffix || "(none)"}, ${width - leaf.depth} bits`,
+function renderRawValuesCard({ rawLeaves }) {
+  const rows = rawLeaves.map((leaf) => [leaf.key, `${leaf.form} (<code>${leaf.form.toString(16).padStart(2, "0")}</code>)`, `${describeValue(leaf)} <code>${shortHex(leaf.data)}</code>`]);
+  return card("raw values", table(["R key", "form octet", "data"], rows));
+}
+
+function renderLayoutCard({ sections, hashes }, labels) {
+  const hashText = hashes.map(({ hash }) => `${hashName(hash, labels)} ${toHex(hash)}`).join(" · ");
+  const rows = [
+    ["version", toHex(sections.version)],
+    ["tags", `${octetsToBits(sections.tags).match(/.{8}/g).join(" ")} = ${toHex(sections.tags)}`],
+    ["hashes", hashText || "none"],
+    ["raw_keys", toHex(sections.rawKeys) || "none"],
+    ["raw_values", toHex(sections.rawValues) || "none"],
+  ];
+  const parts = Object.values(sections).map((part) => toHex(part) || "none");
+  return card("toy octet layout",
+    table(["section", "content"], rows) +
+    `<p class="layout">${parts.join(" | ")}</p>` +
+    `<p class="hint">${sum(Object.values(sections).map((part) => part.length))} octets, sections separated by | as in the JIP's test vectors.</p>`,
+    { wide: true });
+}
+
+function renderVerifierCard(result, state) {
+  const { verification } = result;
+  const knownRows = verification.known.map((node) => [
+    pathName(node.path),
+    node.entries.length === 0 ? "none: empty subtree" : node.entries.map((entry) => entry.key).join(", "),
+    hashName(node.hash, state.labels),
   ]);
-  return card("keys", table(["leaf", "depth", "suffix shipped"], rows));
-}
-
-function renderValuesCard({ leaves }) {
-  const rows = leaves.map((leaf) => [leaf.key, leaf.value ?? (leaf.leafKind === "ValueHash" ? "in hashes" : "from caller")]);
-  return card("values", table(["leaf", "value"], rows));
-}
-
-function renderLookupsCard(verdicts, coverage) {
-  const verdictRows = verdicts.map(({ key, outcome, detail }) => [key, outcome, detail]);
-  const rangeRows = coverage.map(({ range, coveredKeys }) => [
-    `${range.start} – ${range.end}`,
-    coveredKeys.length === 0 ? "no leaves" : coveredKeys.join(", "),
+  const rawRows = verification.raw.map((leaf) => [
+    pathName(leaf.path),
+    `${leaf.path} + ${leaf.suffix || "(none)"} = ${leaf.key}`,
+    describeValue(leaf),
+    hashName(leaf.hash, state.labels),
   ]);
-  return card("lookups", table(["listed key", "verdict", "why"], verdictRows) +
-    (rangeRows.length ? table(["range", "leaves it covers"], rangeRows) : ""));
+  const presentKeys = [...verification.present].map(([key, { source }]) => `${key} (${source === "entry" ? "entry" : "R"})`);
+  const covered = verification.covered.map((node) => `${pathName(node.path)} (${node.tag})`);
+  const outcome = verification.status === "valid"
+    ? passFail(true, "valid")
+    : passFail(false, `${verification.status}: ${verification.violations.map((violation) => `rule ${violation.rule}, ${violation.message}`).join("; ")}`);
+  return card("verifier's view",
+    `<h4>K: rebuilt from entries</h4>${table(["K at path", "entries consumed", "rebuilt hash"], knownRows)}` +
+    `<h4>R: key from path and suffix</h4>${table(["R at path", "key", "value", "leaf hash"], rawRows)}` +
+    `<h4>Result</h4><p class="mono">root ${verification.rootHash ? hashName(verification.rootHash, state.labels) : "none"} vs trusted ${hashName(state.stateRoot, state.labels)}: ${outcome}</p>` +
+    `<p class="mono">present keys: ${presentKeys.join(", ") || "none"}</p>` +
+    `<p class="mono">covered paths: ${covered.join(", ") || "none"}</p>`,
+    { wide: true, failed: verification.status !== "valid" });
 }
 
-function renderBytesCard(bytes) {
-  const rows = (parts, total) => [...parts.map(([label, size]) => `<tr><td>${label}</td><td class="mono">${size}</td></tr>`),
+function renderVerdictsCard({ verdicts, rangeEntries }) {
+  const verdictRows = verdicts.map(({ key, outcome, detail }) => [key, outcome === "not covered" ? passFail(false, outcome) : outcome, detail]);
+  const rangeRows = rangeEntries.map(({ range, keys }) => [`[${range.start}, ${range.end}]`, keys.length === 0 ? "none: no state key in the range" : keys.join(", ")]);
+  return card("verdicts", table(["listed key", "verdict", "why"], verdictRows) +
+    (rangeRows.length ? table(["range", "entries it covers"], rangeRows) : ""));
+}
+
+function renderCoverageCard(coverage) {
+  const rows = coverage.map(({ text, problems }) => [passFail(problems.length === 0), text, problems.join("; ") || "—"]);
+  return card("requester's checks against its query", table(["", "check", "reason"], rows), { failed: coverage.some(({ problems }) => problems.length) });
+}
+
+function renderCanonicalCard(canonical) {
+  const rows = canonical.map(({ rule, text, checked, failure }) => [
+    String(rule),
+    checked ? passFail(failure === null) : `<span class="hint">not reached</span>`,
+    failure ?? text,
+  ]);
+  const failed = canonical.some(({ checked, failure }) => !checked || failure !== null);
+  return card("canonical-form self-check", table(["rule", "", ""], rows), { wide: true, failed });
+}
+
+function sizeRows(parts, total) {
+  return [...parts.map(([label, size]) => `<tr><td>${label}</td><td class="mono">${size}</td></tr>`),
     `<tr class="total-row"><td>total</td><td class="mono">${total}</td></tr>`].join("");
-  const ratio = bytes.oldTotal === 0 ? "" : `, ${Math.round((100 * bytes.compactTotal) / bytes.oldTotal)}% of the old format`;
-  return card("size estimate (octets)",
-    `<table><tbody><tr><th colspan="2">compact proof${ratio}</th></tr>${rows(bytes.parts, bytes.compactTotal)}</tbody></table>` +
-    `<table><tbody><tr><th colspan="2">old format: whole nodes plus pairs</th></tr>${rows(bytes.oldParts, bytes.oldTotal)}</tbody></table>`);
 }
 
-function renderSections(result, width) {
-  const { encoded } = result;
+function renderSizesCard(sizes) {
+  const compact = sizes.proofTotal + sizes.entriesTotal;
+  const ratio = sizes.oldTotal === 0 ? "" : `, ${Math.round((100 * compact) / sizes.oldTotal)}% of the old format`;
+  return card("size estimate (octets)",
+    `<table><tbody><tr><th colspan="2">proof</th></tr>${sizeRows(sizes.proofParts, sizes.proofTotal)}</tbody></table>` +
+    `<table><tbody><tr><th colspan="2">entries, beside the proof</th></tr>${sizeRows(sizes.entryParts, sizes.entriesTotal)}</tbody></table>` +
+    `<table><tbody><tr><th colspan="2">old format: whole nodes plus pairs</th></tr>${sizeRows(sizes.oldParts, sizes.oldTotal)}</tbody></table>` +
+    `<p class="hint">Proof plus entries: ${compact}${ratio}. The encoded toy proof is ${sizes.encodedLength} octets. A range adds no proof octets per key it covers, only entry octets.</p>`,
+    { wide: true });
+}
+
+function renderSections(result, state) {
   return [
-    renderTagsCard(encoded),
-    renderKindsCard(encoded),
-    renderHashesCard(encoded),
-    renderKeysCard(encoded, width),
-    renderValuesCard(encoded),
-    renderLookupsCard(result.verdicts, result.coverage),
-    renderBytesCard(result.bytes),
+    renderEntriesCard(result.entries, state.width),
+    renderTagsCard(result.encoded),
+    renderHashesCard(result.encoded, state.labels),
+    renderRawKeysCard(result.encoded, state.width),
+    renderRawValuesCard(result.encoded),
+    renderLayoutCard(result.encoded, state.labels),
+    renderVerifierCard(result, state),
+    renderVerdictsCard(result),
+    renderCoverageCard(result.coverage),
+    renderCanonicalCard(result.canonical),
+    renderSizesCard(result.sizes),
   ].join("");
+}
+
+function selfCheckFailures(result) {
+  const canonical = result.canonical.filter(({ checked, failure }) => !checked || failure !== null).map(({ rule }) => `rule ${rule}`);
+  const coverage = result.coverage.filter(({ problems }) => problems.length).map(({ text }) => text);
+  return [...canonical, ...coverage];
 }
 
 function describeQuery(query) {
   const keys = query.listedKeys.length ? query.listedKeys.join(", ") : "none";
   const ranges = query.ranges.length ? query.ranges.map((range) => `[${range.start}, ${range.end}]`).join(", ") : "none";
-  return `keys ${keys} · ranges ${ranges} · known ${query.known}`;
+  return `listed keys ${keys} · ranges ${ranges}`;
 }
 
-function describeTruncation(truncation) {
-  if (!truncation) return "";
-  const charges = truncation.charges.map(({ key, charge, included }) => `${key}: ${charge}${included ? "" : " (does not fit)"}`).join(", ");
-  const outcome = truncation.complete
-    ? "complete: true"
-    : `complete: false, proven_through: ${truncation.provenThrough}; proof below is for the cut query: ${describeQuery(truncation.cutQuery)}`;
-  return `Charged keys ${charges || "none"}; included total ${truncation.total}. ${outcome}.`;
+function describeCut(cut) {
+  if (!cut) return "";
+  const charges = cut.charges.map(({ key, charge, reason, included }) => `${key}: ${charge} (${reason})${included ? "" : ", does not fit"}`).join("; ");
+  const outcome = cut.complete
+    ? "Every charged key fits: the reply is complete."
+    : `Cut key ${cut.cutKey}. The entries and proof below are those of the cut query: ${describeQuery(cut.query)}.`;
+  return `Charged keys: ${charges || "none"}. Included total ${cut.total}. ${outcome}`;
 }
 
 function describeDiff(diff) {
@@ -839,7 +1217,7 @@ function describeDiff(diff) {
   return `Since the previous trie: ${width}added ${list(diff.added)}; removed ${list(diff.removed)}; depth changes ${list(diff.depthChanges)}.`;
 }
 
-const page = { current: null, previous: null };
+const page = { current: null, previous: null, preset: null };
 
 function element(id) {
   return document.getElementById(id);
@@ -851,7 +1229,7 @@ function showError(id, error) {
 }
 
 function readQueryInput() {
-  return { keysText: element("query-keys").value, rangesText: element("query-ranges").value, known: element("query-known").value };
+  return { keysText: element("query-keys").value, rangesText: element("query-ranges").value };
 }
 
 function rebuildTrie() {
@@ -867,9 +1245,9 @@ function rebuildTrie() {
 }
 
 function renderTrieSummary() {
-  const { width, entries } = page.current;
-  const keys = entries.map(({ typed, key }) => (typed === key ? key : `${typed} → ${key}`)).join(", ");
-  element("trie-summary").textContent = `W = ${width} · ${entries.length} keys: ${keys || "none (empty state)"}`;
+  const { width, typedEntries } = page.current;
+  const keys = typedEntries.map(({ typed, key }) => (typed === key ? key : `${typed} → ${key}`)).join(", ");
+  element("trie-summary").textContent = `W = ${width} · ${typedEntries.length} keys: ${keys || "none (empty state)"}`;
 }
 
 function renderPrevious() {
@@ -882,20 +1260,27 @@ function renderPrevious() {
   }
 }
 
+function clearProof(message) {
+  element("query-summary").textContent = "";
+  element("truncation").textContent = "";
+  element("self-check-error").textContent = "";
+  element("proof-sections").innerHTML = `<p class="hint">${message}</p>`;
+}
+
 function renderProof() {
   element("query-error").textContent = "";
   try {
-    const request = parseQuery(readQueryInput(), page.current.width);
-    const result = proveQuery(page.current, request, parseSizeLimit(element("size-limit").value));
-    element("query-summary").textContent = `Padded query: ${describeQuery(request)}`;
-    element("truncation").textContent = describeTruncation(result.truncation);
-    element("proof-sections").innerHTML = renderSections(result, page.current.width);
+    const query = parseQuery(readQueryInput(), page.current.width);
+    const result = proveQuery(page.current, query, parseSizeLimit(element("size-limit").value));
+    const failures = selfCheckFailures(result);
+    element("query-summary").textContent = `Padded query: ${describeQuery(query)}`;
+    element("truncation").textContent = describeCut(result.cut);
+    element("self-check-error").textContent = failures.length ? `Self-check failed, the page built a proof JIP-6 rejects: ${failures.join("; ")}.` : "";
+    element("proof-sections").innerHTML = renderSections(result, page.current);
     return describeProofForTree(result.proofTree, result.provedQuery);
   } catch (error) {
     showError("query-error", error);
-    element("query-summary").textContent = "";
-    element("truncation").textContent = "";
-    element("proof-sections").innerHTML = `<p class="hint">Fix the query above to see its proof.</p>`;
+    clearProof("Fix the query above to see its proof.");
     return null;
   }
 }
@@ -919,6 +1304,7 @@ function saveShowProof(showProof) {
 function applyShowProof() {
   const showProof = element("show-proof").checked;
   for (const proofOnly of document.querySelectorAll("[data-proof-only]")) proofOnly.hidden = !showProof;
+  for (const trieOnly of document.querySelectorAll("[data-trie-only]")) trieOnly.hidden = showProof;
   return showProof;
 }
 
@@ -932,8 +1318,14 @@ function renderAll() {
 function applyQuery(query) {
   element("query-keys").value = query.keys;
   element("query-ranges").value = query.ranges;
-  element("query-known").value = "none";
   element("size-limit").value = "";
+  const stateKeys = query.state ?? page.preset.keys;
+  if (element("trie-keys").value === stateKeys && page.current) {
+    renderAll();
+    return;
+  }
+  element("trie-keys").value = stateKeys;
+  rebuildTrie();
 }
 
 function renderPresetQueryButtons(preset) {
@@ -944,22 +1336,18 @@ function renderPresetQueryButtons(preset) {
     button.type = "button";
     button.id = `preset-query-${index}`;
     button.textContent = query.name;
-    button.addEventListener("click", () => {
-      applyQuery(query);
-      renderAll();
-    });
+    button.addEventListener("click", () => applyQuery(query));
     container.append(button);
   });
 }
 
 function loadPreset(preset) {
+  page.preset = preset;
   for (const button of element("preset-buttons").children) {
     button.setAttribute("aria-pressed", String(button.id === `preset-${preset.id}`));
   }
   renderPresetQueryButtons(preset);
-  element("trie-keys").value = preset.keys;
   applyQuery(preset.queries[0]);
-  rebuildTrie();
 }
 
 function startPage() {
@@ -975,7 +1363,7 @@ function startPage() {
     event.preventDefault();
     rebuildTrie();
   });
-  for (const id of ["query-keys", "query-ranges", "query-known", "size-limit"]) {
+  for (const id of ["query-keys", "query-ranges", "size-limit"]) {
     element(id).addEventListener("input", renderAll);
   }
   element("show-previous").addEventListener("change", renderPrevious);
